@@ -1,34 +1,99 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { Suspense, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { config } from '@/config/production'
+import { errorHandler } from '@/utils/errorHandler'
+
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { PageLoading } from '@/components/common/Loading'
+import { Layout } from '@/components/layout/Layout'
+
+
+// Lazy load components for better performance
+const Dashboard = React.lazy(() => import('@/components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
+const VehicleSearch = React.lazy(() => import('@/components/vehicles/VehicleSearch').then(m => ({ default: m.VehicleSearch })))
+const VehicleDetail = React.lazy(() => import('@/components/vehicles/VehicleDetail').then(m => ({ default: m.VehicleDetail })))
+const AlertManager = React.lazy(() => import('@/components/alerts/AlertManager').then(m => ({ default: m.AlertManager })))
+const NotificationCenter = React.lazy(() => import('@/components/notifications/NotificationCenter').then(m => ({ default: m.NotificationCenter })))
+
+
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false
+        }
+        return failureCount < 3
+      },
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+})
 
 function App() {
-  const [count, setCount] = useState(0)
+  useEffect(() => {
+    // Initialize production configuration
+    if (config.isProduction) {
+      // Log application start
+      errorHandler.logUserAction('app_start', {
+        version: config.appVersion,
+        environment: config.environment,
+      })
+    }
+  }, [])
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Auto Scouter</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Welcome to Auto Scouter - Your automated scouting solution
-      </p>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <Router>
+          <Suspense fallback={<PageLoading />}>
+            <Routes>
+              {/* Default route */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+              {/* Main application routes */}
+              <Route path="/dashboard" element={
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              } />
+              <Route path="/search" element={
+                <Layout>
+                  <VehicleSearch />
+                </Layout>
+              } />
+              <Route path="/vehicle/:id" element={
+                <Layout>
+                  <VehicleDetail vehicleId="" onBack={() => window.history.back()} />
+                </Layout>
+              } />
+              <Route path="/alerts" element={
+                <Layout>
+                  <AlertManager />
+                </Layout>
+              } />
+              <Route path="/notifications" element={
+                <Layout>
+                  <NotificationCenter />
+                </Layout>
+              } />
+
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
+        </Router>
+      </ErrorBoundary>
+    </QueryClientProvider>
   )
 }
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
@@ -106,27 +106,57 @@ class ScoutReport(Base):
 
 
 class Alert(Base):
-    """Alert model for price/availability notifications"""
+    """Enhanced Alert model for comprehensive vehicle notifications"""
     __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+
+    # Alert identification
+    name = Column(String(200), nullable=False)  # User-friendly name for the alert
+    description = Column(Text, nullable=True)  # Optional description
 
     # Filter criteria (stored as individual columns for easier querying)
-    make = Column(String(50), nullable=True)
-    model = Column(String(100), nullable=True)
-    min_price = Column(Integer, nullable=True)  # in EUR
-    max_price = Column(Integer, nullable=True)  # in EUR
-    year = Column(Integer, nullable=True)
-    fuel_type = Column(String(20), nullable=True)
-    transmission = Column(String(20), nullable=True)
-    city = Column(String(100), nullable=True)
+    make = Column(String(50), nullable=True, index=True)
+    model = Column(String(100), nullable=True, index=True)
+    min_price = Column(Integer, nullable=True, index=True)  # in EUR
+    max_price = Column(Integer, nullable=True, index=True)  # in EUR
+    min_year = Column(Integer, nullable=True, index=True)
+    max_year = Column(Integer, nullable=True, index=True)
+    max_mileage = Column(Integer, nullable=True, index=True)  # in kilometers
+    fuel_type = Column(String(20), nullable=True, index=True)
+    transmission = Column(String(20), nullable=True, index=True)
+    body_type = Column(String(30), nullable=True, index=True)
+
+    # Location criteria
+    city = Column(String(100), nullable=True, index=True)
+    region = Column(String(100), nullable=True, index=True)
+    location_radius = Column(Integer, nullable=True)  # in kilometers
+
+    # Advanced criteria
+    min_engine_power = Column(Integer, nullable=True)  # in HP
+    max_engine_power = Column(Integer, nullable=True)  # in HP
+    condition = Column(String(20), nullable=True)  # new, used, demo
+
+    # Alert behavior
+    is_active = Column(Boolean, default=True, index=True)
+    notification_frequency = Column(String(20), default="immediate")  # immediate, daily, weekly
+    last_triggered = Column(DateTime(timezone=True), nullable=True)
+    trigger_count = Column(Integer, default=0)
+    max_notifications_per_day = Column(Integer, default=5)
 
     # Alert metadata
-    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
     user = relationship("User", back_populates="alerts")
     notifications = relationship("Notification", back_populates="alert", cascade="all, delete-orphan")
+
+    # Indexes for performance
+    __table_args__ = (
+        Index('idx_alert_user_active', 'user_id', 'is_active'),
+        Index('idx_alert_criteria', 'make', 'model', 'min_price', 'max_price'),
+        Index('idx_alert_location', 'city', 'region'),
+        Index('idx_alert_frequency', 'notification_frequency', 'last_triggered'),
+    )

@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 from app.routers import scouts, teams, matches, automotive, auth, alerts, cars, notifications, admin
+from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring
 from app.core.config import settings
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
+from app.services.health_check import health_service
 
 app = FastAPI(
     title="Auto Scouter API",
@@ -16,6 +19,8 @@ app = FastAPI(
     - **User Authentication**: JWT-based authentication system
     - **Price Alerts**: Create and manage price/availability alerts
     - **Real-time Data**: Access to recently scraped automotive data
+    - **Notification System**: Comprehensive alert and notification management
+    - **Background Processing**: Celery-based background task processing
 
     ### Authentication
     Most endpoints require authentication using JWT tokens.
@@ -50,6 +55,14 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(cars.router, prefix="/api/v1/cars", tags=["cars"])
 app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
+
+# Enhanced notification system routes
+app.include_router(enhanced_notifications.router, prefix="/api/v1/notifications", tags=["enhanced-notifications"])
+app.include_router(enhanced_alerts.router, prefix="/api/v1/alerts", tags=["enhanced-alerts"])
+app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["webhooks"])
+app.include_router(realtime.router, prefix="/api/v1/realtime", tags=["realtime"])
+app.include_router(monitoring.router, prefix="/api/v1/monitoring", tags=["monitoring"])
+
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 app.include_router(scouts.router, prefix="/api/v1/scouts", tags=["scouts"])
 app.include_router(teams.router, prefix="/api/v1/teams", tags=["teams"])
@@ -83,4 +96,48 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """Basic health check endpoint"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": settings.VERSION
+    }
+
+
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Comprehensive health check endpoint"""
+    return health_service.get_comprehensive_health()
+
+
+@app.get("/api/v1/system/status")
+async def system_status():
+    """Get system status including notification system"""
+    try:
+        # Check Redis connection
+        import redis
+        r = redis.Redis(host='localhost', port=6379, db=0)
+        redis_status = "connected" if r.ping() else "disconnected"
+    except:
+        redis_status = "disconnected"
+    
+    try:
+        # Check Celery workers
+        from app.core.celery_app import celery_app
+        inspect = celery_app.control.inspect()
+        active_workers = inspect.active()
+        celery_status = "running" if active_workers else "stopped"
+    except:
+        celery_status = "unknown"
+    
+    return {
+        "status": "healthy",
+        "components": {
+            "api": "running",
+            "database": "connected",
+            "redis": redis_status,
+            "celery": celery_status,
+            "notification_system": "active" if redis_status == "connected" and celery_status == "running" else "inactive"
+        },
+        "version": "1.0.0"
+    }

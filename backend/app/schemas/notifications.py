@@ -1,165 +1,174 @@
 """
-Notification System Schemas
-
-This module contains Pydantic schemas for notification system validation and API serialization.
+Pydantic schemas for notification-related API endpoints
 """
 
-from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from enum import Enum
 
-
-class NotificationType(str, Enum):
-    EMAIL = "email"
-    IN_APP = "in_app"
-    PUSH = "push"
-    SMS = "sms"
+from app.models.notifications import NotificationType, NotificationStatus, NotificationFrequency
 
 
-class NotificationStatus(str, Enum):
-    PENDING = "pending"
-    SENT = "sent"
-    DELIVERED = "delivered"
-    FAILED = "failed"
-    OPENED = "opened"
-    CLICKED = "clicked"
-
-
-class NotificationFrequency(str, Enum):
-    IMMEDIATE = "immediate"
-    HOURLY = "hourly"
-    DAILY = "daily"
-    WEEKLY = "weekly"
-
-
-# Notification Preferences Schemas
-class NotificationPreferencesBase(BaseModel):
-    email_enabled: bool = True
-    in_app_enabled: bool = True
-    push_enabled: bool = False
-    sms_enabled: bool = False
-    email_frequency: NotificationFrequency = NotificationFrequency.IMMEDIATE
-    push_frequency: NotificationFrequency = NotificationFrequency.IMMEDIATE
-    max_notifications_per_day: int = Field(10, ge=1, le=100)
-    max_notifications_per_alert_per_day: int = Field(5, ge=1, le=20)
-    quiet_hours_start: str = Field("22:00", regex=r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
-    quiet_hours_end: str = Field("08:00", regex=r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
-    quiet_hours_enabled: bool = False
-    include_images: bool = True
-    include_full_details: bool = True
-    language: str = Field("en", max_length=5)
-
-
-class NotificationPreferencesCreate(NotificationPreferencesBase):
-    pass
-
-
-class NotificationPreferencesUpdate(BaseModel):
-    email_enabled: Optional[bool] = None
-    in_app_enabled: Optional[bool] = None
-    push_enabled: Optional[bool] = None
-    sms_enabled: Optional[bool] = None
-    email_frequency: Optional[NotificationFrequency] = None
-    push_frequency: Optional[NotificationFrequency] = None
-    max_notifications_per_day: Optional[int] = Field(None, ge=1, le=100)
-    max_notifications_per_alert_per_day: Optional[int] = Field(None, ge=1, le=20)
-    quiet_hours_start: Optional[str] = Field(None, regex=r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
-    quiet_hours_end: Optional[str] = Field(None, regex=r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
-    quiet_hours_enabled: Optional[bool] = None
-    include_images: Optional[bool] = None
-    include_full_details: Optional[bool] = None
-    language: Optional[str] = Field(None, max_length=5)
-
-
-class NotificationPreferencesResponse(NotificationPreferencesBase):
+class NotificationResponse(BaseModel):
+    """Response schema for notification data"""
     id: int
     user_id: int
+    alert_id: Optional[int] = None
+    listing_id: Optional[int] = None
+    notification_type: NotificationType
+    title: str
+    message: str
+    content_data: Optional[Dict[str, Any]] = None
+    priority: int
+    status: NotificationStatus
+    is_read: bool = False
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
+    delivered_at: Optional[datetime] = None
+    opened_at: Optional[datetime] = None
+    retry_count: int = 0
+    error_message: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-# Notification Schemas
-class NotificationBase(BaseModel):
-    notification_type: NotificationType
-    title: str = Field(..., max_length=200)
-    message: str
-    content_data: Optional[Dict[str, Any]] = None
-    priority: int = Field(1, ge=1, le=3)
-
-
-class NotificationCreate(NotificationBase):
-    user_id: int
-    alert_id: Optional[int] = None
-    listing_id: Optional[int] = None
-
-
-class NotificationUpdate(BaseModel):
-    status: Optional[NotificationStatus] = None
-    is_read: Optional[bool] = None
-    opened_at: Optional[datetime] = None
-    clicked_at: Optional[datetime] = None
-
-
-class NotificationResponse(NotificationBase):
+class NotificationPreferencesResponse(BaseModel):
+    """Response schema for notification preferences"""
     id: int
     user_id: int
-    alert_id: Optional[int] = None
-    listing_id: Optional[int] = None
-    status: NotificationStatus
-    is_read: bool
-    sent_at: Optional[datetime] = None
-    delivered_at: Optional[datetime] = None
-    opened_at: Optional[datetime] = None
-    clicked_at: Optional[datetime] = None
+    email_enabled: bool = True
+    email_frequency: NotificationFrequency = NotificationFrequency.IMMEDIATE
+    push_enabled: bool = True
+    push_frequency: NotificationFrequency = NotificationFrequency.IMMEDIATE
+    in_app_enabled: bool = True
+    sms_enabled: bool = False
+    sms_frequency: NotificationFrequency = NotificationFrequency.IMMEDIATE
+    quiet_hours_enabled: bool = False
+    quiet_hours_start: Optional[str] = None
+    quiet_hours_end: Optional[str] = None
+    timezone: str = "UTC"
+    language: str = "en"
+    max_notifications_per_day: int = 10
+    max_notifications_per_alert_per_day: int = 5
+    digest_enabled: bool = False
+    digest_frequency: NotificationFrequency = NotificationFrequency.DAILY
     created_at: datetime
     updated_at: Optional[datetime] = None
-    expires_at: Optional[datetime] = None
-    error_message: Optional[str] = None
-    retry_count: int
 
     class Config:
         from_attributes = True
 
 
 class NotificationWithDetails(NotificationResponse):
-    """Notification with related alert and listing details"""
-    alert: Optional[Dict[str, Any]] = None
-    listing: Optional[Dict[str, Any]] = None
+    """Notification with additional details"""
+    alert_name: Optional[str] = None
+    vehicle_make: Optional[str] = None
+    vehicle_model: Optional[str] = None
+    vehicle_year: Optional[int] = None
+    vehicle_price: Optional[float] = None
+
+class NotificationHistoryResponse(BaseModel):
+    """Response for notification history"""
+    notifications: List[NotificationWithDetails]
+    total: int
+    page: int
+    limit: int
+    has_more: bool
+
+class UserNotificationStats(BaseModel):
+    """User notification statistics"""
+    total_notifications: int
+    unread_notifications: int
+    notifications_today: int
+    notifications_this_week: int
+    notifications_this_month: int
+    most_active_alert: Optional[str] = None
+
+class NotificationUpdate(BaseModel):
+    """Schema for updating notifications"""
+    is_read: Optional[bool] = None
+    action: str = Field(..., pattern="^(mark_read|mark_unread|delete)$")
+
+class NotificationSystemHealth(BaseModel):
+    """System health for notifications"""
+    email_service_status: str
+    push_service_status: str
+    sms_service_status: str
+    queue_size: int
+    failed_notifications_24h: int
+    average_delivery_time_seconds: float
+
+class AlertMatchRunSummary(BaseModel):
+    """Summary of alert matching run"""
+    run_id: str
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    total_alerts_checked: int
+    total_vehicles_processed: int
+    total_matches_found: int
+    notifications_sent: int
+    errors_encountered: int
+    status: str
+
+class AlertMatchResult(BaseModel):
+    """Result of alert matching"""
+    alert_id: int
+    vehicle_id: int
+    match_score: float
+    matched_criteria: List[str]
+    notification_sent: bool = False
+
+class NotificationType(str, Enum):
+    """Types of notifications"""
+    VEHICLE_MATCH = "vehicle_match"
+    PRICE_DROP = "price_drop"
+    ALERT_CREATED = "alert_created"
+    ALERT_TRIGGERED = "alert_triggered"
+    SYSTEM_NOTIFICATION = "system_notification"
+
+class NotificationPreferencesUpdate(BaseModel):
+    """Schema for updating notification preferences"""
+    email_enabled: Optional[bool] = None
+    email_frequency: Optional[NotificationFrequency] = None
+    push_enabled: Optional[bool] = None
+    push_frequency: Optional[NotificationFrequency] = None
+    in_app_enabled: Optional[bool] = None
+    sms_enabled: Optional[bool] = None
+    sms_frequency: Optional[NotificationFrequency] = None
+    quiet_hours_enabled: Optional[bool] = None
+    quiet_hours_start: Optional[str] = Field(None, pattern=r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    quiet_hours_end: Optional[str] = Field(None, pattern=r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    timezone: Optional[str] = None
+    language: Optional[str] = None
+    max_notifications_per_day: Optional[int] = Field(None, ge=1, le=100)
+    max_notifications_per_alert_per_day: Optional[int] = Field(None, ge=1, le=20)
+    digest_enabled: Optional[bool] = None
+    digest_frequency: Optional[NotificationFrequency] = None
 
 
-# Notification Template Schemas
-class NotificationTemplateBase(BaseModel):
-    name: str = Field(..., max_length=100)
+class NotificationStats(BaseModel):
+    """Schema for notification statistics"""
+    total_notifications: int
+    unread_notifications: int
+    notifications_by_type: Dict[str, int]
+    notifications_by_status: Dict[str, int]
+    period_days: int
+
+
+class NotificationTemplateResponse(BaseModel):
+    """Response schema for notification templates"""
+    id: int
+    name: str
     notification_type: NotificationType
-    language: str = Field("en", max_length=5)
-    subject_template: Optional[str] = Field(None, max_length=200)
-    title_template: str = Field(..., max_length=200)
+    language: str
+    subject_template: Optional[str] = None
+    title_template: Optional[str] = None
     message_template: str
     html_template: Optional[str] = None
-    variables: List[str] = []
-    is_active: bool = True
-
-
-class NotificationTemplateCreate(NotificationTemplateBase):
-    pass
-
-
-class NotificationTemplateUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=100)
-    subject_template: Optional[str] = Field(None, max_length=200)
-    title_template: Optional[str] = Field(None, max_length=200)
-    message_template: Optional[str] = None
-    html_template: Optional[str] = None
     variables: Optional[List[str]] = None
-    is_active: Optional[bool] = None
-
-
-class NotificationTemplateResponse(NotificationTemplateBase):
-    id: int
+    is_active: bool = True
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -167,96 +176,81 @@ class NotificationTemplateResponse(NotificationTemplateBase):
         from_attributes = True
 
 
-# Alert Matching Schemas
-class AlertMatchResult(BaseModel):
-    alert_id: int
-    listing_id: int
-    match_score: float = Field(..., ge=0.0, le=1.0)
-    matched_criteria: List[str]
-    notification_created: bool = False
-
-
-class AlertMatchRunSummary(BaseModel):
-    run_id: str
-    started_at: datetime
-    completed_at: Optional[datetime] = None
-    status: str
-    alerts_processed: int
-    listings_checked: int
-    matches_found: int
-    notifications_created: int
-    processing_time_seconds: Optional[float] = None
+class NotificationQueueResponse(BaseModel):
+    """Response schema for notification queue items"""
+    id: int
+    notification_id: int
+    priority: int = 2
+    status: str = "queued"
+    scheduled_for: Optional[datetime] = None
+    processing_started_at: Optional[datetime] = None
+    processing_completed_at: Optional[datetime] = None
+    retry_count: int = 0
     error_message: Optional[str] = None
+    worker_id: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 
-# Notification Statistics Schemas
-class NotificationStats(BaseModel):
-    total_notifications: int
-    notifications_by_type: Dict[str, int]
-    notifications_by_status: Dict[str, int]
-    recent_notifications_24h: int
-    failed_notifications_24h: int
-    average_delivery_time_minutes: Optional[float] = None
+class NotificationCreate(BaseModel):
+    """Schema for creating notifications"""
+    alert_id: Optional[int] = None
+    listing_id: Optional[int] = None
+    notification_type: NotificationType
+    title: str
+    message: str
+    content_data: Optional[Dict[str, Any]] = None
+    priority: int = Field(2, ge=1, le=5)
 
 
-class UserNotificationStats(BaseModel):
-    user_id: int
-    total_notifications: int
-    unread_notifications: int
-    notifications_last_7_days: int
-    most_common_alert_type: Optional[str] = None
+class NotificationBulkAction(BaseModel):
+    """Schema for bulk notification actions"""
+    notification_ids: List[int]
+    action: str = Field(..., pattern="^(mark_read|mark_unread|delete)$")
 
 
-# Bulk Operations Schemas
-class BulkNotificationCreate(BaseModel):
-    notifications: List[NotificationCreate]
-    send_immediately: bool = False
-
-
-class BulkNotificationResponse(BaseModel):
-    created_count: int
-    failed_count: int
-    created_ids: List[int]
-    errors: List[str]
-
-
-# Notification History Schemas
-class NotificationHistoryFilter(BaseModel):
+class NotificationFilter(BaseModel):
+    """Schema for notification filtering"""
     notification_type: Optional[NotificationType] = None
     status: Optional[NotificationStatus] = None
-    alert_id: Optional[int] = None
+    is_read: Optional[bool] = None
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
-    is_read: Optional[bool] = None
+    alert_id: Optional[int] = None
+    priority_min: Optional[int] = Field(None, ge=1, le=5)
+    priority_max: Optional[int] = Field(None, ge=1, le=5)
 
 
-class NotificationHistoryResponse(BaseModel):
-    notifications: List[NotificationResponse]
-    total_count: int
-    unread_count: int
-    page: int
-    page_size: int
-    total_pages: int
+class NotificationExport(BaseModel):
+    """Schema for notification export requests"""
+    format: str = Field("json", pattern="^(json|csv|excel)$")
+    date_from: Optional[datetime] = None
+    date_to: Optional[datetime] = None
+    include_content_data: bool = False
+    filters: Optional[NotificationFilter] = None
 
 
-# Admin Monitoring Schemas
-class NotificationSystemHealth(BaseModel):
-    status: str  # healthy, warning, critical
-    queue_size: int
-    failed_notifications_last_hour: int
-    average_processing_time_seconds: float
-    last_successful_alert_run: Optional[datetime] = None
-    active_workers: int
-    system_load: float
-    issues: List[str] = []
+class NotificationDigestPreview(BaseModel):
+    """Schema for digest preview"""
+    user_id: int
+    date_from: datetime
+    date_to: datetime
+    notification_count: int
+    alert_groups: Dict[str, int]
+    preview_content: str
 
 
 class NotificationDeliveryReport(BaseModel):
-    period_start: datetime
-    period_end: datetime
-    total_sent: int
-    delivery_rate: float
-    open_rate: float
-    click_rate: float
-    bounce_rate: float
-    delivery_times_by_type: Dict[str, float]
+    """Schema for delivery reports"""
+    notification_id: int
+    delivery_attempts: int
+    last_attempt_at: Optional[datetime] = None
+    delivery_status: str
+    delivery_details: Optional[Dict[str, Any]] = None
+    bounce_reason: Optional[str] = None
+    opened: bool = False
+    clicked: bool = False
+    unsubscribed: bool = False

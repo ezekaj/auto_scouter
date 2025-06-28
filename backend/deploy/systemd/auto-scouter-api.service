@@ -1,0 +1,66 @@
+[Unit]
+Description=Auto Scouter FastAPI Application
+Documentation=https://github.com/your-org/auto-scouter
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+Requires=network.target
+
+[Service]
+Type=exec
+User=autoscouter
+Group=autoscouter
+WorkingDirectory=/opt/auto-scouter/backend
+Environment=PATH=/opt/auto-scouter/backend/venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONPATH=/opt/auto-scouter/backend
+Environment=ENVIRONMENT=production
+EnvironmentFile=/opt/auto-scouter/backend/.env
+
+# Use Gunicorn with Uvicorn workers for production
+ExecStart=/opt/auto-scouter/backend/venv/bin/gunicorn app.main:app \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --workers 4 \
+    --worker-connections 1000 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --timeout 30 \
+    --keep-alive 2 \
+    --bind 0.0.0.0:8000 \
+    --access-logfile /var/log/auto-scouter/api-access.log \
+    --error-logfile /var/log/auto-scouter/api-error.log \
+    --log-level info \
+    --preload
+
+# Health check
+ExecStartPost=/bin/sleep 5
+ExecStartPost=/bin/bash -c 'curl -f http://localhost:8000/health || exit 1'
+
+# Graceful shutdown
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Restart configuration
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/auto-scouter /var/log/auto-scouter /tmp
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=auto-scouter-api
+
+[Install]
+WantedBy=multi-user.target
