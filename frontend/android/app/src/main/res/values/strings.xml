@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vehicle Scout</string>
+    <string name="title_activity_main">Vehicle Scout</string>
+    <string name="package_name">com.vehiclescout.app</string>
+    <string name="custom_url_scheme">com.vehiclescout.app</string>
+</resources>
