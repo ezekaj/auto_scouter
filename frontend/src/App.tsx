@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { config } from '@/config/production'
 import { errorHandler } from '@/utils/errorHandler'
+import { MobileUtils } from '@/utils/mobile'
+import { nativeService } from '@/services/nativeService'
 
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { PageLoading } from '@/components/common/Loading'
@@ -41,14 +43,26 @@ const queryClient = new QueryClient({
 
 function App() {
   useEffect(() => {
-    // Initialize production configuration
-    if (config.isProduction) {
-      // Log application start
-      errorHandler.logUserAction('app_start', {
-        version: config.appVersion,
-        environment: config.environment,
-      })
+    const initializeApp = async () => {
+      // Initialize native features
+      await nativeService.initialize()
+
+      // Initialize mobile features
+      await MobileUtils.initializeApp()
+
+      // Initialize production configuration
+      if (config.isProduction) {
+        // Log application start
+        errorHandler.logUserAction('app_start', {
+          version: config.appVersion,
+          environment: config.environment,
+          platform: nativeService.isNative() ? 'mobile' : 'web',
+          appInfo: nativeService.getAppInfo(),
+        })
+      }
     }
+
+    initializeApp()
   }, [])
 
   return (

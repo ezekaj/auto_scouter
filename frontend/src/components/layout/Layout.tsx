@@ -11,7 +11,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="mobile-viewport bg-background mobile-safe-area">
       <Header onMenuClick={() => setSidebarOpen(true)} />
 
       {/* Desktop Layout */}
@@ -28,7 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
+        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-4rem)] mobile-scroll">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
