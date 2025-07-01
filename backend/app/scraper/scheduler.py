@@ -15,6 +15,7 @@ from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 
 from app.scraper.config import scraper_settings
 from app.scraper.automotive_scraper import GruppoAutoUnoScraper
+from app.scraper.multi_source_scraper import multi_source_scraper
 from app.services.automotive_service import AutomotiveService
 from app.models.base import SessionLocal
 

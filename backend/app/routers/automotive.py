@@ -19,6 +19,8 @@ from app.schemas.automotive import (
 from app.scraper.scheduler import scraper_scheduler
 from app.scraper.monitoring import scraper_monitor
 from app.scraper.compliance import compliance_manager
+from app.scraper.multi_source_scraper import multi_source_scraper
+from app.tasks.scraping_tasks import scrape_all_sources_task
 
 router = APIRouter()
 
@@ -236,6 +238,121 @@ def get_scraper_health(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting health status: {str(e)}"
+        )
+
+
+@router.post("/scraper/multi-source", response_model=Dict[str, Any])
+def trigger_multi_source_scrape(
+    max_vehicles_per_source: int = Query(50, ge=1, le=200, description="Maximum vehicles per source"),
+    background_tasks: BackgroundTasks = None
+):
+    """Trigger multi-source scraping from all enabled sources"""
+    try:
+        # Start the multi-source scraping task
+        task = scrape_all_sources_task.delay(max_vehicles_per_source=max_vehicles_per_source)
+
+        return {
+            "message": "Multi-source scraping started successfully",
+            "task_id": task.id,
+            "max_vehicles_per_source": max_vehicles_per_source,
+            "status": "started"
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error starting multi-source scraping: {str(e)}"
+        )
+
+
+@router.get("/scraper/sources", response_model=Dict[str, Any])
+def get_scraper_sources():
+    """Get status of all scraping sources"""
+    try:
+        return multi_source_scraper.get_source_status()
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting source status: {str(e)}"
+        )
+
+
+@router.post("/scraper/sources/{source}/enable", response_model=Dict[str, str])
+def enable_scraper_source(source: str):
+    """Enable a specific scraping source"""
+    try:
+        success = multi_source_scraper.enable_source(source)
+        if success:
+            return {
+                "message": f"Source '{source}' enabled successfully",
+                "source": source,
+                "status": "enabled"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to enable source '{source}'"
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error enabling source: {str(e)}"
+        )
+
+
+@router.post("/scraper/sources/{source}/disable", response_model=Dict[str, str])
+def disable_scraper_source(source: str):
+    """Disable a specific scraping source"""
+    try:
+        success = multi_source_scraper.disable_source(source)
+        if success:
+            return {
+                "message": f"Source '{source}' disabled successfully",
+                "source": source,
+                "status": "disabled"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to disable source '{source}'"
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error disabling source: {str(e)}"
+        )
+
+
+@router.post("/scraper/sources/{source}/scrape", response_model=Dict[str, Any])
+def scrape_single_source(
+    source: str,
+    max_vehicles: int = Query(50, ge=1, le=200, description="Maximum vehicles to scrape")
+):
+    """Scrape from a single specific source"""
+    try:
+        result = multi_source_scraper.scrape_source(source, max_vehicles)
+
+        return {
+            "message": f"Scraping from '{source}' completed",
+            "source": source,
+            "success": result.success,
+            "vehicles_count": result.vehicles_count,
+            "duration_seconds": result.duration_seconds,
+            "error": result.error_message
+        }
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error scraping source: {str(e)}"
         )
 
 

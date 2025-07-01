@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 
 class Settings(BaseSettings):
@@ -7,15 +8,15 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
 
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/auto_scouter"
+    # Database - Use environment variable if available, fallback to local
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/auto_scouter")
     # Fallback to SQLite for development if PostgreSQL is not available
     SQLITE_FALLBACK: bool = True
 
-    # Redis/Celery
-    REDIS_URL: str = "redis://localhost:6379/0"
-    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
+    # Redis/Celery - Use environment variables if available
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CELERY_BROKER_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CELERY_RESULT_BACKEND: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # Email Configuration
     SMTP_HOST: str = "smtp.gmail.com"
@@ -55,8 +56,20 @@ class Settings(BaseSettings):
     # Webhook Security
     WEBHOOK_SECRET: str = ""
 
+    # Scraper Configuration
+    SCRAPER_SCRAPING_ENABLED: bool = True
+    SCRAPER_SCRAPING_INTERVAL_HOURS: int = 8
+    SCRAPER_MAX_PAGES_TO_SCRAPE: int = 50
+    SCRAPER_REQUEST_DELAY: float = 2.0
+    SCRAPER_ENABLE_DEDUPLICATION: bool = True
+    SCRAPER_KEEP_HISTORICAL_DATA: bool = True
+    SCRAPER_DATA_RETENTION_DAYS: int = 365
+    SCRAPER_ENABLE_METRICS: bool = True
+    SCRAPER_LOG_LEVEL: str = "INFO"
+
     class Config:
         env_file = ".env"
+        case_sensitive = True
 
 
 settings = Settings()

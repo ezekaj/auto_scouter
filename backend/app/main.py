@@ -6,6 +6,7 @@ from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realt
 from app.core.config import settings
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.health_check import health_service
+from app.models.base import engine, Base
 
 app = FastAPI(
     title="Auto Scouter API",
@@ -73,7 +74,16 @@ app.include_router(automotive.router, prefix="/api/v1/automotive", tags=["automo
 # Event handlers for background tasks
 @app.on_event("startup")
 async def startup_event():
-    """Initialize background tasks on startup"""
+    """Initialize database and background tasks on startup"""
+    # Create database tables
+    try:
+        print("Creating database tables...")
+        Base.metadata.create_all(bind=engine)
+        print("Database tables created successfully!")
+    except Exception as e:
+        print(f"Warning: Failed to create database tables: {e}")
+
+    # Start background tasks
     try:
         start_background_tasks()
     except Exception as e:

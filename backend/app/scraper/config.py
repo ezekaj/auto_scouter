@@ -38,7 +38,12 @@ class ScraperSettings(BaseSettings):
     SCRAPING_ENABLED: bool = True
     SCRAPING_INTERVAL_HOURS: int = 8
     SCRAPING_START_HOUR: int = 2  # Start at 2 AM to avoid peak hours
-    
+
+    # Multi-Source Configuration
+    ENABLE_AUTOSCOUT24: bool = True
+    ENABLE_MOBILE_DE: bool = True
+    ENABLE_GRUPPOAUTOUNO: bool = True
+
     # Data Processing Configuration
     MAX_PAGES_TO_SCRAPE: int = 50
     ENABLE_IMAGE_DOWNLOAD: bool = False

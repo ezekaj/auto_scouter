@@ -13,6 +13,7 @@ from app.core.celery_app import celery_app
 from app.models.base import SessionLocal
 from app.models.automotive import VehicleListing, ScrapingSession, ScrapingLog
 from app.scraper.automotive_scraper import GruppoAutoUnoScraper
+from app.scraper.multi_source_scraper import multi_source_scraper
 from app.services.automotive_service import AutomotiveService
 
 logger = logging.getLogger(__name__)
@@ -204,6 +205,82 @@ def scrape_single_source(source_name: str, max_vehicles: int = 50):
             
     finally:
         db.close()
+
+
+@celery_app.task(bind=True, name="scrape_all_sources")
+def scrape_all_sources_task(self, max_vehicles_per_source: int = 50):
+    """
+    Scrape vehicles from all enabled sources
+
+    Args:
+        max_vehicles_per_source: Maximum vehicles to scrape per source
+
+    Returns:
+        Dictionary with scraping results
+    """
+    session_id = str(uuid.uuid4())
+    start_time = datetime.utcnow()
+
+    logger.info(f"Starting multi-source scraping task {session_id}")
+
+    try:
+        # Update task progress
+        self.update_state(
+            state='PROGRESS',
+            meta={'status': 'Starting multi-source scraping', 'progress': 0}
+        )
+
+        # Perform multi-source scraping
+        results = multi_source_scraper.scrape_all_sources(
+            max_vehicles_per_source=max_vehicles_per_source
+        )
+
+        # Process results and save to database
+        db = SessionLocal()
+        total_new = 0
+        total_updated = 0
+        source_results = {}
+
+        try:
+            for i, result in enumerate(results):
+                self.update_state(
+                    state='PROGRESS',
+                    meta={
+                        'status': f'Processing {result.source} results',
+                        'progress': int((i / len(results)) * 100)
+                    }
+                )
+
+                source_results[result.source] = {
+                    'success': result.success,
+                    'vehicles_count': result.vehicles_count,
+                    'error': result.error_message,
+                    'duration_seconds': result.duration_seconds
+                }
+
+                if result.success:
+                    total_new += result.vehicles_count
+
+        finally:
+            db.close()
+
+        return {
+            'status': 'completed',
+            'session_id': session_id,
+            'total_new_vehicles': total_new,
+            'total_updated_vehicles': total_updated,
+            'sources_processed': len(results),
+            'source_results': source_results,
+            'duration_seconds': (datetime.utcnow() - start_time).total_seconds()
+        }
+
+    except Exception as e:
+        logger.error(f"Error in scrape_all_sources_task: {e}")
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'session_id': session_id
+        }
 
 
 @celery_app.task
