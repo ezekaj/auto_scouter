@@ -72,16 +72,26 @@ class VehicleListing(Base):
     features = Column(Text)  # JSON string of features list
     
     # Metadata
-    source_website = Column(String(100), default="gruppoautouno.it")
+    source_website = Column(String(100), nullable=False, index=True)  # autoscout24, mobile_de, gruppoautouno
+    source_country = Column(String(3), default="IT")  # IT, DE, etc.
     scraped_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(DateTime(timezone=True), onupdate=func.now())
     is_active = Column(Boolean, default=True, index=True)
+
+    # Data quality and deduplication
+    data_quality_score = Column(Float, default=0.0)  # 0.0 to 1.0
+    duplicate_of = Column(Integer, ForeignKey("vehicle_listings.id"), nullable=True)  # Reference to master record
+    is_duplicate = Column(Boolean, default=False, index=True)
+    confidence_score = Column(Float, default=1.0)  # Confidence in data accuracy
     
     # Relationships
     images = relationship("VehicleImage", back_populates="vehicle", cascade="all, delete-orphan")
     price_history = relationship("PriceHistory", back_populates="vehicle", cascade="all, delete-orphan")
     scraping_logs = relationship("ScrapingLog", back_populates="vehicle")
     notifications = relationship("Notification", back_populates="listing")
+
+    # Self-referential relationship for duplicates
+    duplicates = relationship("VehicleListing", remote_side=[id], backref="master_record")
 
     # Indexes for common queries
     __table_args__ = (
@@ -90,6 +100,11 @@ class VehicleListing(Base):
         Index('idx_location', 'city', 'region'),
         Index('idx_specs', 'fuel_type', 'transmission'),
         Index('idx_active_listings', 'is_active', 'scraped_at'),
+        Index('idx_source_website', 'source_website', 'is_active'),
+        Index('idx_source_country', 'source_country', 'source_website'),
+        Index('idx_duplicates', 'is_duplicate', 'duplicate_of'),
+        Index('idx_data_quality', 'data_quality_score', 'confidence_score'),
+        Index('idx_external_source', 'external_id', 'source_website'),
     )
 
 
@@ -181,15 +196,19 @@ class ScrapingSession(Base):
     session_id = Column(String(36), unique=True, index=True)
     
     # Session metadata
-    source_website = Column(String(100), nullable=False)
+    source_website = Column(String(100), nullable=False, index=True)
+    source_country = Column(String(3), default="IT")
     scraper_version = Column(String(20))
     user_agent = Column(String(500))
+    session_type = Column(String(20), default="single")  # single, multi_source, scheduled
     
     # Session statistics
     total_pages_scraped = Column(Integer, default=0)
     total_vehicles_found = Column(Integer, default=0)
     total_vehicles_new = Column(Integer, default=0)
     total_vehicles_updated = Column(Integer, default=0)
+    total_vehicles_skipped = Column(Integer, default=0)
+    total_duplicates_found = Column(Integer, default=0)
     total_errors = Column(Integer, default=0)
     
     # Performance metrics
@@ -231,6 +250,54 @@ class DataQualityMetric(Base):
     measurement_date = Column(DateTime(timezone=True), server_default=func.now())
     period_start = Column(DateTime(timezone=True))
     period_end = Column(DateTime(timezone=True))
+
+
+class MultiSourceSession(Base):
+    """Multi-source scraping session coordination model"""
+    __tablename__ = "multi_source_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String(36), unique=True, index=True)
+
+    # Session metadata
+    session_type = Column(String(20), default="multi_source")  # multi_source, scheduled_multi
+    trigger_type = Column(String(20), default="manual")  # manual, scheduled, api
+    max_vehicles_per_source = Column(Integer, default=50)
+
+    # Source coordination
+    sources_requested = Column(Text)  # JSON array of source names
+    sources_completed = Column(Text)  # JSON array of completed sources
+    sources_failed = Column(Text)  # JSON array of failed sources
+
+    # Aggregated statistics
+    total_sources = Column(Integer, default=0)
+    completed_sources = Column(Integer, default=0)
+    failed_sources = Column(Integer, default=0)
+    total_vehicles_found = Column(Integer, default=0)
+    total_vehicles_new = Column(Integer, default=0)
+    total_vehicles_updated = Column(Integer, default=0)
+    total_duplicates_found = Column(Integer, default=0)
+    total_errors = Column(Integer, default=0)
+
+    # Performance metrics
+    total_duration_seconds = Column(Integer)
+    average_source_duration = Column(Float)
+    fastest_source_duration = Column(Float)
+    slowest_source_duration = Column(Float)
+
+    # Session timing
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True))
+
+    # Status
+    status = Column(String(20), default="running")  # running, completed, failed, cancelled
+    error_message = Column(Text)
+
+    # Indexes
+    __table_args__ = (
+        Index('idx_multi_session_status', 'status', 'started_at'),
+        Index('idx_multi_session_type', 'session_type', 'trigger_type'),
+    )
     
     # Additional details
     details = Column(Text)  # JSON string with detailed metrics

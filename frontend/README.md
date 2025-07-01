@@ -2,6 +2,8 @@
 
 A personalized React application for intelligent vehicle search and alert management. Built with React 18, TypeScript, and modern web technologies. **Customized for single-user personal use.**
 
+This application can run as both a web application and a native mobile app using Capacitor.
+
 ## 🚀 Features
 
 - **Vehicle Search & Filtering**: Advanced search with multiple filter options
@@ -15,6 +17,7 @@ A personalized React application for intelligent vehicle search and alert manage
 ## 🛠️ Technology Stack
 
 - **Frontend**: React 18, TypeScript, Vite
+- **Mobile**: Capacitor for native iOS/Android apps
 - **Styling**: Tailwind CSS, Radix UI Components
 - **State Management**: React Query
 - **Routing**: React Router v6
@@ -83,7 +86,164 @@ docker run -d -p 80:80 -p 443:443 auto-scouter-frontend
 - Set publish directory: `dist`
 - Configure environment variables
 
-## 📚 Documentation
+## � Mobile App (Android/iOS)
+
+The application has been converted to a native mobile app using Capacitor. The mobile app includes all web features plus native mobile optimizations.
+
+### Mobile Features
+- **Native Performance**: Optimized for mobile devices
+- **Touch Interactions**: Mobile-friendly UI with haptic feedback
+- **Status Bar Control**: Native status bar styling
+- **Splash Screen**: Custom branded splash screen
+- **Keyboard Handling**: Smart keyboard behavior
+- **Safe Areas**: Proper handling of device notches and safe areas
+
+### Building Android APK
+
+#### Prerequisites
+- Java 17 JDK
+- Android SDK (API level 34)
+- Node.js 18+
+
+#### Setup Android Environment
+```bash
+# Install Java 17
+sudo apt update
+sudo apt install openjdk-17-jdk
+
+# Set JAVA_HOME
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Download Android command line tools
+mkdir -p ~/android-sdk/cmdline-tools
+cd ~/android-sdk/cmdline-tools
+wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+unzip commandlinetools-linux-11076708_latest.zip
+mv cmdline-tools latest
+
+# Set Android environment
+export ANDROID_HOME=~/android-sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+# Accept licenses and install SDK components
+sdkmanager --licenses
+sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+```
+
+#### Build APK
+```bash
+# Install dependencies
+npm install
+
+# Build web assets
+npm run build
+
+# Sync Capacitor
+npx cap sync android
+
+# Build Android APK
+cd android
+./gradlew assembleDebug
+
+# APK location: android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+#### Build Scripts
+The following npm scripts are available:
+```bash
+npm run cap:sync      # Sync web assets to native platforms
+npm run cap:build     # Build web assets and sync
+npm run android:build # Build Android APK
+npm run android:run   # Build and run on connected device
+```
+
+### Production APK (Signed)
+
+For production release, you'll need to sign the APK:
+
+1. **Generate Keystore**:
+```bash
+keytool -genkey -v -keystore vehicle-scout.keystore -alias vehicle-scout -keyalg RSA -keysize 2048 -validity 10000
+```
+
+2. **Configure Signing** in `android/app/build.gradle`:
+```gradle
+android {
+    signingConfigs {
+        release {
+            storeFile file('path/to/vehicle-scout.keystore')
+            storePassword 'your-store-password'
+            keyAlias 'vehicle-scout'
+            keyPassword 'your-key-password'
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+```
+
+3. **Build Release APK**:
+```bash
+cd android
+./gradlew assembleRelease
+```
+
+### iOS Build (macOS Required)
+
+For iOS builds, you'll need:
+- macOS with Xcode
+- Apple Developer Account
+- iOS device or simulator
+
+```bash
+# Add iOS platform
+npx cap add ios
+
+# Sync and open in Xcode
+npx cap sync ios
+npx cap open ios
+```
+
+### Mobile App Distribution
+
+#### Android
+- **Debug APK**: For testing (app-debug.apk)
+- **Release APK**: For production distribution
+- **Google Play Store**: Upload signed APK/AAB
+- **Direct Distribution**: Share APK file directly
+
+#### iOS
+- **TestFlight**: For beta testing
+- **App Store**: For production release
+- **Enterprise Distribution**: For internal use
+
+### Mobile Development
+
+#### Testing on Device
+```bash
+# Android (with device connected via USB)
+npm run android:run
+
+# iOS (requires macOS and Xcode)
+npx cap run ios
+```
+
+#### Live Reload
+```bash
+# Start dev server
+npm run dev
+
+# In another terminal, sync and run
+npx cap sync android
+npx cap run android --livereload --external
+```
+
+## �📚 Documentation
 
 - **[Deployment Guide](DEPLOYMENT.md)**: Complete deployment instructions
 - **[Production Checklist](PRODUCTION_CHECKLIST.md)**: Pre and post-deployment checklist

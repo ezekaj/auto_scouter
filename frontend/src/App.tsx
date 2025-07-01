@@ -7,12 +7,13 @@ import { MobileUtils } from '@/utils/mobile'
 import { nativeService } from '@/services/nativeService'
 
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
-import { PageLoading } from '@/components/common/Loading'
 import { Layout } from '@/components/layout/Layout'
 
 
 // Lazy load components for better performance
 const Dashboard = React.lazy(() => import('@/components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
+const EnhancedDashboard = React.lazy(() => import('@/components/dashboard/EnhancedDashboard'))
+const ApiTest = React.lazy(() => import('@/components/ApiTest'))
 const VehicleSearch = React.lazy(() => import('@/components/vehicles/VehicleSearch').then(m => ({ default: m.VehicleSearch })))
 const VehicleDetail = React.lazy(() => import('@/components/vehicles/VehicleDetail').then(m => ({ default: m.VehicleDetail })))
 const AlertManager = React.lazy(() => import('@/components/alerts/AlertManager').then(m => ({ default: m.AlertManager })))
@@ -44,21 +45,32 @@ const queryClient = new QueryClient({
 function App() {
   useEffect(() => {
     const initializeApp = async () => {
-      // Initialize native features
-      await nativeService.initialize()
+      try {
+        console.log('Initializing app...')
 
-      // Initialize mobile features
-      await MobileUtils.initializeApp()
+        // Initialize native features
+        await nativeService.initialize()
+        console.log('Native service initialized')
 
-      // Initialize production configuration
-      if (config.isProduction) {
-        // Log application start
-        errorHandler.logUserAction('app_start', {
-          version: config.appVersion,
-          environment: config.environment,
-          platform: nativeService.isNative() ? 'mobile' : 'web',
-          appInfo: nativeService.getAppInfo(),
-        })
+        // Initialize mobile features
+        await MobileUtils.initializeApp()
+        console.log('Mobile utils initialized')
+
+        // Initialize production configuration
+        if (config.isProduction) {
+          console.log('Production mode - logging app start')
+          // Log application start
+          errorHandler.logUserAction('app_start', {
+            version: config.appVersion,
+            environment: config.environment,
+            platform: nativeService.isNative() ? 'mobile' : 'web',
+            appInfo: nativeService.getAppInfo(),
+          })
+        }
+
+        console.log('App initialization complete')
+      } catch (error) {
+        console.error('App initialization failed:', error)
       }
     }
 
@@ -67,9 +79,23 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
+      <ErrorBoundary fallback={
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Vehicle Scout</h1>
+            <p className="text-gray-600">Application failed to load. Please check your connection and try again.</p>
+          </div>
+        </div>
+      }>
         <Router>
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p>Loading Vehicle Scout...</p>
+              </div>
+            </div>
+          }>
             <Routes>
               {/* Default route */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -78,6 +104,16 @@ function App() {
               <Route path="/dashboard" element={
                 <Layout>
                   <Dashboard />
+                </Layout>
+              } />
+              <Route path="/enhanced" element={
+                <Layout>
+                  <EnhancedDashboard />
+                </Layout>
+              } />
+              <Route path="/api-test" element={
+                <Layout>
+                  <ApiTest />
                 </Layout>
               } />
               <Route path="/search" element={

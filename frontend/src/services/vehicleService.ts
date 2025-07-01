@@ -45,7 +45,7 @@ export interface VehicleSearchResponse {
 export class VehicleService {
   async searchVehicles(params: VehicleSearchParams = {}): Promise<VehicleSearchResponse> {
     try {
-      const response = await api.get('/cars', { params })
+      const response = await api.get('/automotive/vehicles', { params })
       return response.data
     } catch (error) {
       console.error('Error searching vehicles:', error)
@@ -55,7 +55,7 @@ export class VehicleService {
 
   async getVehicle(id: string): Promise<Vehicle> {
     try {
-      const response = await api.get(`/cars/${id}`)
+      const response = await api.get(`/automotive/vehicles/${id}`)
       return response.data
     } catch (error) {
       console.error('Error getting vehicle:', error)
@@ -65,13 +65,10 @@ export class VehicleService {
 
   async getRecentVehicles(limit: number = 20): Promise<Vehicle[]> {
     try {
-      const response = await api.get('/cars', {
-        params: {
-          limit,
-          sort: 'newest'
-        }
+      const response = await api.get('/automotive/new-cars', {
+        params: { limit }
       })
-      return response.data.vehicles || []
+      return response.data || []
     } catch (error) {
       console.error('Error getting recent vehicles:', error)
       return []
@@ -81,13 +78,14 @@ export class VehicleService {
   async getFeaturedVehicles(): Promise<Vehicle[]> {
     try {
       // Get recent vehicles with good prices as "featured"
-      const response = await api.get('/cars', {
+      const response = await api.get('/automotive/vehicles', {
         params: {
           limit: 6,
-          sort: 'price_asc'
+          sort_by: 'price',
+          sort_order: 'asc'
         }
       })
-      return response.data.vehicles || []
+      return response.data.data || []
     } catch (error) {
       console.error('Error getting featured vehicles:', error)
       return []
@@ -96,13 +94,13 @@ export class VehicleService {
 
   async getVehiclesByMake(make: string): Promise<Vehicle[]> {
     try {
-      const response = await api.get('/cars', {
+      const response = await api.get('/automotive/vehicles', {
         params: {
           make,
           limit: 50
         }
       })
-      return response.data.vehicles || []
+      return response.data.data || []
     } catch (error) {
       console.error('Error getting vehicles by make:', error)
       return []
@@ -111,8 +109,8 @@ export class VehicleService {
 
   async getPopularMakes(): Promise<string[]> {
     try {
-      // Return common Italian car makes based on Gruppo Auto Uno inventory
-      return [
+      const response = await api.get('/automotive/makes')
+      return response.data || [
         'Volkswagen',
         'Peugeot',
         'Citroën',
@@ -136,10 +134,10 @@ export class VehicleService {
 
   async getModelsByMake(make: string): Promise<string[]> {
     try {
-      // Get vehicles by make and extract unique models
-      const vehicles = await this.getVehiclesByMake(make)
-      const models = [...new Set(vehicles.map(v => v.model).filter(Boolean))]
-      return models.sort()
+      const response = await api.get('/automotive/models', {
+        params: { make }
+      })
+      return response.data || []
     } catch (error) {
       console.error('Error getting models by make:', error)
       return []
@@ -148,7 +146,7 @@ export class VehicleService {
 
   async triggerScrape(): Promise<void> {
     try {
-      await api.post('/scrape')
+      await api.post('/automotive/scraper/trigger')
     } catch (error) {
       console.error('Error triggering scrape:', error)
       throw error
@@ -157,7 +155,7 @@ export class VehicleService {
 
   async getVehicleStats(): Promise<any> {
     try {
-      const response = await api.get('/cars/stats')
+      const response = await api.get('/automotive/analytics')
       return response.data
     } catch (error) {
       console.error('Error getting vehicle stats:', error)
@@ -276,10 +274,40 @@ export class VehicleService {
 
   async getSystemStats(): Promise<any> {
     try {
-      const response = await api.get('/stats')
+      const response = await api.get('/system/status')
       return response.data
     } catch (error) {
       console.error('Error getting system stats:', error)
+      throw error
+    }
+  }
+
+  async getScraperStatus(): Promise<any> {
+    try {
+      const response = await api.get('/automotive/scraper/status')
+      return response.data
+    } catch (error) {
+      console.error('Error getting scraper status:', error)
+      throw error
+    }
+  }
+
+  async getScraperHealth(): Promise<any> {
+    try {
+      const response = await api.get('/automotive/scraper/health')
+      return response.data
+    } catch (error) {
+      console.error('Error getting scraper health:', error)
+      throw error
+    }
+  }
+
+  async getHealthCheck(): Promise<any> {
+    try {
+      const response = await api.get('/health')
+      return response.data
+    } catch (error) {
+      console.error('Error getting health check:', error)
       throw error
     }
   }

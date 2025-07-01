@@ -17,7 +17,7 @@ def create_database():
         from app.models.scout import Scout, Team, Match, ScoutReport, User, Alert
         from app.models.automotive import (
             VehicleListing, VehicleImage, PriceHistory,
-            ScrapingLog, ScrapingSession, DataQualityMetric
+            ScrapingLog, ScrapingSession, DataQualityMetric, MultiSourceSession
         )
         from app.models.notifications import (
             Notification, NotificationPreferences, NotificationTemplate,

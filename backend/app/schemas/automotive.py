@@ -152,7 +152,14 @@ class VehicleListingBase(BaseModel):
     features: Optional[str] = None  # JSON string
     
     # Metadata
-    source_website: str = Field(default="gruppoautouno.it", max_length=100)
+    source_website: str = Field(..., max_length=100)
+    source_country: str = Field(default="IT", max_length=3)
+
+    # Data quality and deduplication
+    data_quality_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    duplicate_of: Optional[int] = None
+    is_duplicate: bool = False
+    confidence_score: float = Field(default=1.0, ge=0.0, le=1.0)
 
     @validator('vin')
     def validate_vin(cls, v):
@@ -210,6 +217,12 @@ class VehicleListingUpdate(BaseModel):
     primary_image_url: Optional[str] = None
     description: Optional[str] = None
     features: Optional[str] = None
+    source_website: Optional[str] = None
+    source_country: Optional[str] = None
+    data_quality_score: Optional[float] = None
+    duplicate_of: Optional[int] = None
+    is_duplicate: Optional[bool] = None
+    confidence_score: Optional[float] = None
     is_active: Optional[bool] = None
 
 
@@ -260,6 +273,44 @@ class VehicleSearchResponse(BaseModel):
     page_size: int
     total_pages: int
     filters_applied: VehicleSearchFilters
+
+
+# Multi-Source Session Schemas
+class MultiSourceSessionBase(BaseModel):
+    session_type: str = "multi_source"
+    trigger_type: str = "manual"
+    max_vehicles_per_source: int = 50
+    sources_requested: Optional[str] = None  # JSON array
+
+
+class MultiSourceSessionCreate(MultiSourceSessionBase):
+    pass
+
+
+class MultiSourceSession(MultiSourceSessionBase):
+    id: int
+    session_id: str
+    sources_completed: Optional[str] = None  # JSON array
+    sources_failed: Optional[str] = None  # JSON array
+    total_sources: int = 0
+    completed_sources: int = 0
+    failed_sources: int = 0
+    total_vehicles_found: int = 0
+    total_vehicles_new: int = 0
+    total_vehicles_updated: int = 0
+    total_duplicates_found: int = 0
+    total_errors: int = 0
+    total_duration_seconds: Optional[int] = None
+    average_source_duration: Optional[float] = None
+    fastest_source_duration: Optional[float] = None
+    slowest_source_duration: Optional[float] = None
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    status: str = "running"
+    error_message: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 
 # Scraping related schemas

@@ -2,7 +2,7 @@
 
 export const config = {
   // API Configuration
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+  apiBaseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
   wsBaseUrl: import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/ws',
   apiTimeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
 
@@ -39,11 +39,11 @@ export const config = {
 // Validate required configuration
 export const validateConfig = () => {
   const requiredVars = [
-    'VITE_API_BASE_URL',
+    'VITE_API_URL',
   ]
 
   const missing = requiredVars.filter(varName => !import.meta.env[varName])
-  
+
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
   }
