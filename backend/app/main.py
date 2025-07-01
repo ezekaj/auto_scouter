@@ -31,7 +31,7 @@ app = FastAPI(
     ### Rate Limiting
     API requests are rate-limited to ensure fair usage and system stability.
     """,
-    version="1.0.0",
+    version="1.0.1",
     contact={
         "name": "Auto Scouter Team",
         "email": "support@autoscouter.com",
