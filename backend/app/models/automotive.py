@@ -73,6 +73,7 @@ class VehicleListing(Base):
     
     # Metadata
     source_website = Column(String(100), nullable=False, index=True)  # autoscout24, mobile_de, gruppoautouno
+    source = Column(String(50), default="unknown")  # Short source identifier
     source_country = Column(String(3), default="IT")  # IT, DE, etc.
     scraped_at = Column(DateTime(timezone=True), server_default=func.now())
     last_updated = Column(DateTime(timezone=True), onupdate=func.now())
@@ -80,6 +81,7 @@ class VehicleListing(Base):
 
     # Data quality and deduplication
     data_quality_score = Column(Float, default=0.0)  # 0.0 to 1.0
+    duplicate_hash = Column(String(64))  # Hash for duplicate detection
     duplicate_of = Column(Integer, ForeignKey("vehicle_listings.id"), nullable=True)  # Reference to master record
     is_duplicate = Column(Boolean, default=False, index=True)
     confidence_score = Column(Float, default=1.0)  # Confidence in data accuracy
