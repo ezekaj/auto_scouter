@@ -187,16 +187,43 @@ export const useNotifications = () => {
 
   // WebSocket connection for real-time notifications (optional)
   useEffect(() => {
-    // This would be implemented if you have WebSocket support
-    // const ws = new WebSocket('ws://localhost:8000/ws/notifications');
-    // 
-    // ws.onmessage = (event) => {
-    //   const notification = JSON.parse(event.data);
-    //   setNotifications(prev => [notification, ...prev]);
-    //   setUnreadCount(prev => prev + 1);
-    // };
-    // 
-    // return () => ws.close();
+    // WebSocket implementation for real-time notifications
+    if (import.meta.env.VITE_ENABLE_WEBSOCKET !== 'false') {
+      try {
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/notifications';
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected for notifications');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const notification = JSON.parse(event.data);
+            setNotifications(prev => [notification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket connection closed');
+        };
+
+        return () => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+        };
+      } catch (error) {
+        console.error('Failed to establish WebSocket connection:', error);
+      }
+    }
   }, []);
 
   return {
