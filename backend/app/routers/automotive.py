@@ -105,19 +105,51 @@ def get_analytics(db: Session = Depends(get_db)):
     """Get analytics and statistics about the vehicle data"""
     try:
         automotive_service = AutomotiveService(db)
-        
+
         # Get data quality metrics
         quality_metrics = automotive_service.get_data_quality_metrics()
-        
+
         # Get monitoring data overview
         data_overview = scraper_monitor.get_data_overview(db)
-        
+
+        # Multi-source analytics
+        from app.models.automotive import MultiSourceSession
+        multi_source_stats = db.query(
+            func.count(MultiSourceSession.id).label('total_sessions'),
+            func.avg(MultiSourceSession.total_vehicles_found).label('avg_vehicles_per_session'),
+            func.sum(MultiSourceSession.total_vehicles_found).label('total_vehicles_scraped')
+        ).first()
+
+        # Source distribution
+        source_distribution = db.query(
+            VehicleListing.source_website,
+            VehicleListing.source_country,
+            func.count(VehicleListing.id).label('count'),
+            func.avg(VehicleListing.data_quality_score).label('avg_quality')
+        ).filter(VehicleListing.is_active == True).group_by(
+            VehicleListing.source_website, VehicleListing.source_country
+        ).all()
+
         return {
             "data_quality": quality_metrics,
             "overview": data_overview,
+            "multi_source": {
+                "total_sessions": int(multi_source_stats.total_sessions) if multi_source_stats.total_sessions else 0,
+                "avg_vehicles_per_session": float(multi_source_stats.avg_vehicles_per_session) if multi_source_stats.avg_vehicles_per_session else 0,
+                "total_vehicles_scraped": int(multi_source_stats.total_vehicles_scraped) if multi_source_stats.total_vehicles_scraped else 0
+            },
+            "source_distribution": [
+                {
+                    "website": website,
+                    "country": country,
+                    "vehicle_count": count,
+                    "avg_data_quality": float(avg_quality) if avg_quality else 0
+                }
+                for website, country, count, avg_quality in source_distribution
+            ],
             "timestamp": scraper_monitor.get_system_health()["timestamp"]
         }
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -343,6 +375,131 @@ def scrape_single_source(
             "duration_seconds": result.duration_seconds,
             "error": result.error_message
         }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error scraping from source '{source}': {str(e)}"
+        )
+
+
+@router.get("/multi-source-sessions", response_model=Dict[str, Any])
+def get_multi_source_sessions(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    status: Optional[str] = Query(None, description="Filter by session status"),
+    db: Session = Depends(get_db)
+):
+    """Get multi-source scraping sessions with pagination"""
+    try:
+        from app.models.automotive import MultiSourceSession
+
+        query = db.query(MultiSourceSession)
+
+        if status:
+            query = query.filter(MultiSourceSession.status == status)
+
+        total_count = query.count()
+        sessions = query.order_by(desc(MultiSourceSession.started_at)).offset(offset).limit(limit).all()
+
+        return {
+            "sessions": [
+                {
+                    "id": session.id,
+                    "session_id": session.session_id,
+                    "status": session.status,
+                    "trigger_type": session.trigger_type,
+                    "total_sources": session.total_sources,
+                    "completed_sources": session.completed_sources,
+                    "failed_sources": session.failed_sources,
+                    "total_vehicles_found": session.total_vehicles_found,
+                    "total_duplicates_found": session.total_duplicates_found,
+                    "total_errors": session.total_errors,
+                    "started_at": session.started_at.isoformat() if session.started_at else None,
+                    "completed_at": session.completed_at.isoformat() if session.completed_at else None,
+                    "duration_seconds": session.duration_seconds
+                }
+                for session in sessions
+            ],
+            "pagination": {
+                "total_count": total_count,
+                "limit": limit,
+                "offset": offset,
+                "has_next": offset + limit < total_count,
+                "has_previous": offset > 0
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting multi-source sessions: {str(e)}"
+        )
+
+
+@router.get("/multi-source-sessions/{session_id}", response_model=Dict[str, Any])
+def get_multi_source_session_details(session_id: str, db: Session = Depends(get_db)):
+    """Get detailed information about a specific multi-source session"""
+    try:
+        from app.models.automotive import MultiSourceSession, ScrapingSession
+
+        # Get the multi-source session
+        multi_session = db.query(MultiSourceSession).filter(
+            MultiSourceSession.session_id == session_id
+        ).first()
+
+        if not multi_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Multi-source session not found"
+            )
+
+        # Get individual scraping sessions for this multi-source session
+        individual_sessions = db.query(ScrapingSession).filter(
+            ScrapingSession.multi_source_session_id == session_id
+        ).order_by(ScrapingSession.started_at).all()
+
+        return {
+            "multi_source_session": {
+                "id": multi_session.id,
+                "session_id": multi_session.session_id,
+                "status": multi_session.status,
+                "trigger_type": multi_session.trigger_type,
+                "total_sources": multi_session.total_sources,
+                "completed_sources": multi_session.completed_sources,
+                "failed_sources": multi_session.failed_sources,
+                "total_vehicles_found": multi_session.total_vehicles_found,
+                "total_duplicates_found": multi_session.total_duplicates_found,
+                "total_errors": multi_session.total_errors,
+                "started_at": multi_session.started_at.isoformat() if multi_session.started_at else None,
+                "completed_at": multi_session.completed_at.isoformat() if multi_session.completed_at else None,
+                "duration_seconds": multi_session.duration_seconds,
+                "performance_metrics": multi_session.performance_metrics
+            },
+            "individual_sessions": [
+                {
+                    "id": session.id,
+                    "source_website": session.source_website,
+                    "status": session.status,
+                    "total_vehicles_found": session.total_vehicles_found,
+                    "total_vehicles_processed": session.total_vehicles_processed,
+                    "total_errors": session.total_errors,
+                    "started_at": session.started_at.isoformat() if session.started_at else None,
+                    "completed_at": session.completed_at.isoformat() if session.completed_at else None,
+                    "duration_seconds": session.duration_seconds,
+                    "error_details": session.error_details
+                }
+                for session in individual_sessions
+            ]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting multi-source session details: {str(e)}"
+        )
 
     except ValueError as e:
         raise HTTPException(

@@ -1,15 +1,18 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Bell, Menu, Car } from 'lucide-react'
+import { Search, Bell, Menu, Car, LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface HeaderProps {
   onMenuClick?: () => void
 }
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const { user, logout } = useAuth()
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -60,11 +63,25 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </Button>
           </Link>
 
-          {/* Welcome message */}
-          <div className="hidden sm:block">
-            <span className="text-sm text-muted-foreground">Welcome back, </span>
-            <span className="text-sm font-medium">Petrit</span>
-          </div>
+          {/* User menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">{user?.username || 'User'}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled>
+                <User className="mr-2 h-4 w-4" />
+                {user?.email}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

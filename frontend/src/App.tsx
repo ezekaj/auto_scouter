@@ -8,6 +8,8 @@ import { nativeService } from '@/services/nativeService'
 
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { Layout } from '@/components/layout/Layout'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 
 // Lazy load components for better performance
@@ -18,6 +20,8 @@ const VehicleSearch = React.lazy(() => import('@/components/vehicles/VehicleSear
 const VehicleDetail = React.lazy(() => import('@/components/vehicles/VehicleDetail').then(m => ({ default: m.VehicleDetail })))
 const AlertManager = React.lazy(() => import('@/components/alerts/AlertManager').then(m => ({ default: m.AlertManager })))
 const NotificationCenter = React.lazy(() => import('@/components/notifications/NotificationCenter').then(m => ({ default: m.NotificationCenter })))
+const LoginForm = React.lazy(() => import('@/components/auth/LoginForm').then(m => ({ default: m.LoginForm })))
+const RegisterForm = React.lazy(() => import('@/components/auth/RegisterForm').then(m => ({ default: m.RegisterForm })))
 
 
 
@@ -79,15 +83,16 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary fallback={
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Vehicle Scout</h1>
-            <p className="text-gray-600">Application failed to load. Please check your connection and try again.</p>
+      <AuthProvider>
+        <ErrorBoundary fallback={
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Vehicle Scout</h1>
+              <p className="text-gray-600">Application failed to load. Please check your connection and try again.</p>
+            </div>
           </div>
-        </div>
-      }>
-        <Router>
+        }>
+          <Router>
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-center">
@@ -97,52 +102,71 @@ function App() {
             </div>
           }>
             <Routes>
+              {/* Authentication routes */}
+              <Route path="/login" element={<LoginForm />} />
+              <Route path="/register" element={<RegisterForm />} />
+
               {/* Default route */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-              {/* Main application routes */}
+              {/* Protected application routes */}
               <Route path="/dashboard" element={
-                <Layout>
-                  <Dashboard />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
               } />
               <Route path="/enhanced" element={
-                <Layout>
-                  <EnhancedDashboard />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <EnhancedDashboard />
+                  </Layout>
+                </ProtectedRoute>
               } />
               <Route path="/api-test" element={
-                <Layout>
-                  <ApiTest />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <ApiTest />
+                  </Layout>
+                </ProtectedRoute>
               } />
               <Route path="/search" element={
-                <Layout>
-                  <VehicleSearch />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <VehicleSearch />
+                  </Layout>
+                </ProtectedRoute>
               } />
               <Route path="/vehicle/:id" element={
-                <Layout>
-                  <VehicleDetail vehicleId="" onBack={() => window.history.back()} />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <VehicleDetail vehicleId="" onBack={() => window.history.back()} />
+                  </Layout>
+                </ProtectedRoute>
               } />
               <Route path="/alerts" element={
-                <Layout>
-                  <AlertManager />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <AlertManager />
+                  </Layout>
+                </ProtectedRoute>
               } />
               <Route path="/notifications" element={
-                <Layout>
-                  <NotificationCenter />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <NotificationCenter />
+                  </Layout>
+                </ProtectedRoute>
               } />
 
               {/* Catch all route */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
-        </Router>
-      </ErrorBoundary>
+          </Router>
+        </ErrorBoundary>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from app.models.base import get_db
 from app.models.scout import User, Alert
-from app.schemas.user import AlertCreate, AlertUpdate, AlertResponse
+from app.schemas.alerts import AlertCreate, AlertUpdate, AlertResponse
 from app.core.auth import get_current_active_user
 
 router = APIRouter()
@@ -26,16 +26,16 @@ def create_alert(
     # Validate that at least one filter criterion is provided
     filter_fields = [
         alert_data.make, alert_data.model, alert_data.min_price,
-        alert_data.max_price, alert_data.year, alert_data.fuel_type,
-        alert_data.transmission, alert_data.city
+        alert_data.max_price, alert_data.min_year, alert_data.max_year,
+        alert_data.fuel_type, alert_data.transmission, alert_data.city
     ]
-    
+
     if not any(field is not None for field in filter_fields):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one filter criterion must be specified"
         )
-    
+
     # Validate price range
     if alert_data.min_price is not None and alert_data.max_price is not None:
         if alert_data.min_price >= alert_data.max_price:
@@ -43,18 +43,19 @@ def create_alert(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Minimum price must be less than maximum price"
             )
-    
+
+    # Validate year range
+    if alert_data.min_year is not None and alert_data.max_year is not None:
+        if alert_data.min_year >= alert_data.max_year:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Minimum year must be less than maximum year"
+            )
+
     # Create alert
     db_alert = Alert(
         user_id=current_user.id,
-        make=alert_data.make,
-        model=alert_data.model,
-        min_price=alert_data.min_price,
-        max_price=alert_data.max_price,
-        year=alert_data.year,
-        fuel_type=alert_data.fuel_type,
-        transmission=alert_data.transmission,
-        city=alert_data.city
+        **alert_data.dict(exclude_unset=True)
     )
     
     db.add(db_alert)

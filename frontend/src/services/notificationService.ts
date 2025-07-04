@@ -28,17 +28,25 @@ export class NotificationService {
     type?: string
   } = {}): Promise<NotificationResponse> {
     try {
-      const response = await api.get('/notifications', { params })
-      return response.data
+      const response = await api.get('/notifications/', { params })
+      return {
+        notifications: response.data.notifications || [],
+        unreadCount: response.data.unread_count || 0,
+        total: response.data.total || 0
+      }
     } catch (error) {
       console.error('Error getting notifications:', error)
-      throw error
+      return {
+        notifications: [],
+        unreadCount: 0,
+        total: 0
+      }
     }
   }
 
   async markAsRead(id: string): Promise<void> {
     try {
-      await api.put(`/notifications/${id}/read`)
+      await api.patch(`/notifications/${id}/read`)
     } catch (error) {
       console.error('Error marking notification as read:', error)
       throw error
@@ -47,7 +55,7 @@ export class NotificationService {
 
   async markAllAsRead(): Promise<void> {
     try {
-      await api.put('/notifications/read-all')
+      await api.patch('/notifications/mark-all-read')
     } catch (error) {
       console.error('Error marking all notifications as read:', error)
       throw error
@@ -63,6 +71,55 @@ export class NotificationService {
     }
   }
 
+  async getNotificationStats(): Promise<any> {
+    try {
+      const response = await api.get('/notifications/stats')
+      return response.data
+    } catch (error) {
+      console.error('Error getting notification stats:', error)
+      return {
+        total: 0,
+        unread: 0,
+        by_type: {},
+        by_priority: {}
+      }
+    }
+  }
+
+  // Utility methods
+  getNotificationIcon(type: string): string {
+    switch (type) {
+      case 'alert_match':
+        return '🎯'
+      case 'system':
+        return '⚙️'
+      case 'scraper':
+        return '🔍'
+      case 'price_change':
+        return '💰'
+      case 'new_listing':
+        return '🆕'
+      default:
+        return 'ℹ️'
+    }
+  }
+
+  formatNotificationTime(createdAt: string): string {
+    const now = new Date()
+    const created = new Date(createdAt)
+    const diffInMinutes = Math.floor((now.getTime() - created.getTime()) / (1000 * 60))
+
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) return `${diffInHours}h ago`
+
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `${diffInDays}d ago`
+
+    return created.toLocaleDateString()
+  }
 }
 
 

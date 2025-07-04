@@ -125,11 +125,13 @@ def main():
     print_step(2, "Starting Background Workers")
     
     workers = []
+    # Enhanced worker configuration for 24/7 operations
     queues = [
-        ("scraping", 1),      # 1 worker for scraping (CPU intensive)
+        ("scraping", 2),       # 2 workers for enhanced 24/7 scraping
+        ("monitoring", 1),     # 1 dedicated worker for monitoring tasks
         ("alert_matching", 2), # 2 workers for alert matching
         ("notifications", 2),  # 2 workers for notifications
-        ("maintenance", 1),    # 1 worker for maintenance tasks
+        ("maintenance", 2),    # 2 workers for enhanced maintenance tasks
         ("default", 1)         # 1 worker for default queue
     ]
     
@@ -156,13 +158,18 @@ def main():
     print_step(5, "System Status")
     
     print(f"✅ Started {len(workers)} background processes")
-    print("📊 Scheduled tasks:")
-    print("   - Vehicle scraping: Every 5 minutes")
-    print("   - Alert matching: Every 5 minutes") 
-    print("   - Notification processing: Every minute")
-    print("   - Data cleanup: Every hour")
-    print("   - Listing cleanup: Daily")
-    print("   - Daily digest: Daily at 8 AM")
+    print("📊 Enhanced 24/7 Scheduled Tasks:")
+    print("   🔄 Comprehensive scraping: Every 2 hours")
+    print("   ⚡ Peak hours intensive: Every 30 minutes (8 AM - 10 PM)")
+    print("   🌙 Off-peak light scraping: Every 4 hours (10 PM - 8 AM)")
+    print("   📡 Real-time monitoring: Every 10 minutes")
+    print("   🔍 Alert matching: Every 5 minutes")
+    print("   📬 Notification processing: Every minute")
+    print("   🧹 Data cleanup: Every hour")
+    print("   📊 Performance monitoring: Every hour")
+    print("   🔧 Listing cleanup: Daily")
+    print("   📈 Data quality check: Weekly")
+    print("   📧 Daily digest: Daily at 8 AM")
     
     print("\n🎉 Background job system is running!")
     print("💡 Press Ctrl+C to stop all processes")

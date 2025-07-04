@@ -2,21 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Car, 
-  TrendingUp, 
-  Clock, 
-  MapPin, 
-  Fuel, 
-  Settings, 
-  RefreshCw, 
+import {
+  Car,
+  TrendingUp,
+  Clock,
+  MapPin,
+  Settings,
+  RefreshCw,
   AlertCircle,
   Database,
   Activity,
   CheckCircle,
-  XCircle
+  XCircle,
+  Bell
 } from 'lucide-react';
 import { vehicleService, Vehicle } from '@/services/vehicleService';
+import { realtimeService, SystemStatusUpdate, RealtimeNotification } from '@/services/realtimeService';
+
 
 interface SystemStatus {
   status: string;
@@ -27,45 +29,85 @@ interface SystemStatus {
     celery: string;
     notification_system: string;
   };
-  version: string;
+  version?: string;
+  scraping_active?: boolean;
+  last_scrape?: string | null;
+  next_scrape?: string | null;
 }
 
 const EnhancedDashboard: React.FC = () => {
   const [recentVehicles, setRecentVehicles] = useState<Vehicle[]>([]);
-  const [featuredVehicles, setFeaturedVehicles] = useState<Vehicle[]>([]);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [scraperStatus, setScraperStatus] = useState<any>(null);
   const [healthCheck, setHealthCheck] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
     loadDashboardData();
+    setupRealtimeConnections();
+
     // Set up periodic refresh
     const interval = setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      realtimeService.cleanup();
+    };
   }, []);
+
+  const setupRealtimeConnections = () => {
+    // Subscribe to system status updates
+    const unsubscribeStatus = realtimeService.subscribeToSystemStatus((status: SystemStatusUpdate) => {
+      setSystemStatus(prev => ({ ...prev, ...status }));
+      setIsConnected(true);
+      setLastUpdate(new Date());
+    });
+
+    // Subscribe to notifications
+    const unsubscribeNotifications = realtimeService.subscribeToNotifications((notification: RealtimeNotification) => {
+      setNotifications(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10 notifications
+      setLastUpdate(new Date());
+    });
+
+    // Subscribe to vehicle matches
+    const unsubscribeMatches = realtimeService.subscribeToVehicleMatches((_match) => {
+      // Refresh recent vehicles when new matches arrive
+      vehicleService.getRecentVehicles(8).then(setRecentVehicles);
+      setLastUpdate(new Date());
+    });
+
+    return () => {
+      unsubscribeStatus();
+      unsubscribeNotifications();
+      unsubscribeMatches();
+    };
+  };
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Load data in parallel
-      const [recent, featured, stats, scraper, health] = await Promise.allSettled([
+      // Load data in parallel with enhanced backend APIs
+      const [recent, _featured, stats, scraper, health, _dashboard, notifications, _metrics] = await Promise.allSettled([
         vehicleService.getRecentVehicles(8),
         vehicleService.getFeaturedVehicles(),
         vehicleService.getSystemStats(),
         vehicleService.getScraperStatus(),
-        vehicleService.getHealthCheck()
+        vehicleService.getHealthCheck(),
+        vehicleService.getDashboardOverview(),
+        realtimeService.getUnreadNotifications(),
+        realtimeService.getSystemMetrics()
       ]);
 
       if (recent.status === 'fulfilled') {
         setRecentVehicles(recent.value);
       }
-      if (featured.status === 'fulfilled') {
-        setFeaturedVehicles(featured.value);
-      }
+      // Featured vehicles functionality removed
       if (stats.status === 'fulfilled') {
         setSystemStatus(stats.value);
       }
@@ -75,6 +117,13 @@ const EnhancedDashboard: React.FC = () => {
       if (health.status === 'fulfilled') {
         setHealthCheck(health.value);
       }
+      // Dashboard stats functionality removed
+      if (notifications.status === 'fulfilled') {
+        setNotifications(notifications.value);
+      }
+      // System metrics functionality removed
+
+      setLastUpdate(new Date());
 
     } catch (err) {
       console.error('Error loading dashboard data:', err);
@@ -149,7 +198,15 @@ const EnhancedDashboard: React.FC = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Vehicle Scout</h1>
-            <p className="text-gray-600 mt-1">Live vehicle data from Italian dealerships</p>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-gray-600">Live vehicle data from Italian dealerships</p>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-xs text-gray-500">
+                  {isConnected ? 'Connected' : 'Disconnected'} • Last update: {lastUpdate.toLocaleTimeString()}
+                </span>
+              </div>
+            </div>
             {error && (
               <div className="flex items-center mt-2 text-red-600">
                 <AlertCircle className="w-4 h-4 mr-2" />
@@ -158,6 +215,15 @@ const EnhancedDashboard: React.FC = () => {
             )}
           </div>
           <div className="flex gap-2">
+            {notifications.length > 0 && (
+              <Button variant="outline" size="sm" className="relative">
+                <Bell className="w-4 h-4 mr-2" />
+                Notifications
+                <Badge className="absolute -top-2 -right-2 px-1 min-w-[1.25rem] h-5">
+                  {notifications.length}
+                </Badge>
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -200,7 +266,7 @@ const EnhancedDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
-                {getStatusIcon(systemStatus?.components?.database)}
+                {getStatusIcon(systemStatus?.components?.database || 'unknown')}
                 <span className="text-2xl font-bold">
                   {systemStatus?.components?.database || 'Unknown'}
                 </span>

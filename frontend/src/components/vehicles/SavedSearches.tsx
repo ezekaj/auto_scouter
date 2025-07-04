@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Search, Trash2, Star, Clock } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Search, Trash2, Star, Clock, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatRelativeTime } from '@/lib/utils'
+import { savedSearchService, SavedSearch } from '@/services/savedSearchService'
 
-interface SavedSearch {
-  id: string
-  name: string
-  searchTerm?: string
-  filters: any
-  resultsCount: number
-  createdAt: Date
-  lastUsed: Date
-  isFavorite: boolean
-}
+// SavedSearch interface is now imported from the service
 
 interface SavedSearchesProps {
   isOpen: boolean
@@ -28,114 +20,128 @@ interface SavedSearchesProps {
   onLoadSearch: (search: SavedSearch) => void
 }
 
-// Mock data
-const mockSavedSearches: SavedSearch[] = [
-  {
-    id: '1',
-    name: 'BMW 3 Series Under €25k',
-    searchTerm: 'BMW 3 Series',
-    filters: { make: 'BMW', model: '3 Series', maxPrice: 25000 },
-    resultsCount: 47,
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    isFavorite: true,
-  },
-  {
-    id: '2',
-    name: 'Diesel Cars in Munich',
-    searchTerm: '',
-    filters: { fuelType: ['Diesel'], location: 'Munich', radius: 50 },
-    resultsCount: 156,
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    lastUsed: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    isFavorite: false,
-  },
-  {
-    id: '3',
-    name: 'Electric Vehicles 2020+',
-    searchTerm: '',
-    filters: { fuelType: ['Electric'], minYear: 2020 },
-    resultsCount: 89,
-    createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000),
-    lastUsed: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    isFavorite: true,
-  },
-  {
-    id: '4',
-    name: 'Luxury SUVs',
-    searchTerm: '',
-    filters: { 
-      bodyType: ['SUV'], 
-      make: ['BMW', 'Mercedes-Benz', 'Audi'], 
-      minPrice: 40000 
-    },
-    resultsCount: 23,
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    lastUsed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    isFavorite: false,
-  },
-]
-
 export const SavedSearches: React.FC<SavedSearchesProps> = ({
   isOpen,
   onClose,
   onLoadSearch,
 }) => {
-  const [searches, setSearches] = useState(mockSavedSearches)
+  const [searches, setSearches] = useState<SavedSearch[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const toggleFavorite = (searchId: string) => {
-    setSearches(prev =>
-      prev.map(search =>
-        search.id === searchId
-          ? { ...search, isFavorite: !search.isFavorite }
-          : search
+  // Load saved searches when component opens
+  useEffect(() => {
+    if (isOpen) {
+      loadSavedSearches()
+    }
+  }, [isOpen])
+
+  const loadSavedSearches = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await savedSearchService.getSavedSearches()
+      setSearches(data)
+    } catch (err) {
+      setError('Failed to load saved searches')
+      console.error('Error loading saved searches:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleFavorite = async (searchId: string) => {
+    try {
+      const updatedSearch = await savedSearchService.toggleFavorite(searchId)
+      setSearches(prev =>
+        prev.map(search =>
+          search.id === searchId ? updatedSearch : search
+        )
       )
-    )
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
+    }
   }
 
-  const deleteSearch = (searchId: string) => {
-    setSearches(prev => prev.filter(search => search.id !== searchId))
+  const deleteSearch = async (searchId: string) => {
+    try {
+      await savedSearchService.deleteSavedSearch(searchId)
+      setSearches(prev => prev.filter(search => search.id !== searchId))
+    } catch (err) {
+      console.error('Error deleting search:', err)
+    }
   }
 
-  const loadSearch = (search: SavedSearch) => {
-    // Update last used timestamp
-    setSearches(prev =>
-      prev.map(s =>
-        s.id === search.id
-          ? { ...s, lastUsed: new Date() }
-          : s
+  const loadSearch = async (search: SavedSearch) => {
+    try {
+      // Update last used timestamp on server
+      await savedSearchService.updateLastUsed(search.id)
+
+      // Update local state
+      setSearches(prev =>
+        prev.map(s =>
+          s.id === search.id
+            ? { ...s, last_used: new Date().toISOString() }
+            : s
+        )
       )
-    )
-    onLoadSearch(search)
+
+      onLoadSearch(search)
+    } catch (err) {
+      console.error('Error updating last used:', err)
+      // Still load the search even if updating timestamp fails
+      onLoadSearch(search)
+    }
   }
 
-  const getFilterSummary = (filters: any): string => {
-    const parts: string[] = []
-    
-    if (filters.make) parts.push(filters.make)
-    if (filters.model) parts.push(filters.model)
-    if (filters.minPrice || filters.maxPrice) {
-      const priceRange = `€${filters.minPrice || 0}${filters.maxPrice ? ` - €${filters.maxPrice}` : '+'}`
-      parts.push(priceRange)
-    }
-    if (filters.minYear || filters.maxYear) {
-      const yearRange = `${filters.minYear || ''}${filters.maxYear ? ` - ${filters.maxYear}` : '+'}`
-      parts.push(yearRange)
-    }
-    if (filters.fuelType?.length) {
-      parts.push(filters.fuelType.join(', '))
-    }
-    if (filters.location) {
-      parts.push(`📍 ${filters.location}`)
-    }
-    
-    return parts.slice(0, 3).join(' • ') + (parts.length > 3 ? '...' : '')
-  }
 
-  const favoriteSearches = searches.filter(s => s.isFavorite)
+
+  const favoriteSearches = searches.filter(s => s.is_favorite)
   const recentSearches = searches
-    .filter(s => !s.isFavorite)
-    .sort((a, b) => b.lastUsed.getTime() - a.lastUsed.getTime())
+    .filter(s => !s.is_favorite)
+    .sort((a, b) => {
+      const aTime = a.last_used ? new Date(a.last_used).getTime() : 0
+      const bTime = b.last_used ? new Date(b.last_used).getTime() : 0
+      return bTime - aTime
+    })
+
+  if (loading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Search className="mr-2 h-5 w-5" />
+              Saved Searches
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading saved searches...</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  if (error) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Search className="mr-2 h-5 w-5" />
+              Saved Searches
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={loadSavedSearches}>Try Again</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -164,23 +170,23 @@ export const SavedSearches: React.FC<SavedSearchesProps> = ({
                           <div className="flex items-center space-x-2 mb-2">
                             <h4 className="font-medium truncate">{search.name}</h4>
                             <Badge variant="secondary" className="text-xs">
-                              {search.resultsCount}
+                              {search.results_count}
                             </Badge>
                           </div>
-                          
-                          {search.searchTerm && (
+
+                          {search.search_term && (
                             <p className="text-sm text-muted-foreground mb-1">
-                              "{search.searchTerm}"
+                              "{search.search_term}"
                             </p>
                           )}
-                          
+
                           <p className="text-xs text-muted-foreground mb-2 truncate">
-                            {getFilterSummary(search.filters)}
+                            {savedSearchService.formatSearchFilters(search.filters)}
                           </p>
-                          
+
                           <div className="flex items-center text-xs text-muted-foreground">
                             <Clock className="mr-1 h-3 w-3" />
-                            Last used {formatRelativeTime(search.lastUsed)}
+                            Last used {search.last_used ? formatRelativeTime(new Date(search.last_used)) : 'Never'}
                           </div>
                         </div>
                         
@@ -237,23 +243,23 @@ export const SavedSearches: React.FC<SavedSearchesProps> = ({
                           <div className="flex items-center space-x-2 mb-2">
                             <h4 className="font-medium truncate">{search.name}</h4>
                             <Badge variant="secondary" className="text-xs">
-                              {search.resultsCount}
+                              {search.results_count}
                             </Badge>
                           </div>
-                          
-                          {search.searchTerm && (
+
+                          {search.search_term && (
                             <p className="text-sm text-muted-foreground mb-1">
-                              "{search.searchTerm}"
+                              "{search.search_term}"
                             </p>
                           )}
-                          
+
                           <p className="text-xs text-muted-foreground mb-2 truncate">
-                            {getFilterSummary(search.filters)}
+                            {savedSearchService.formatSearchFilters(search.filters)}
                           </p>
-                          
+
                           <div className="flex items-center text-xs text-muted-foreground">
                             <Clock className="mr-1 h-3 w-3" />
-                            Last used {formatRelativeTime(search.lastUsed)}
+                            Last used {search.last_used ? formatRelativeTime(new Date(search.last_used)) : 'Never'}
                           </div>
                         </div>
                         

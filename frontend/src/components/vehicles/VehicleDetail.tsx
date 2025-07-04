@@ -1,83 +1,53 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Heart, Share2, MapPin, Calendar, Gauge, Fuel, Settings, Phone, Mail, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Heart, Share2, MapPin, Calendar, Gauge, Fuel, Settings, ExternalLink, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useVehicle } from '@/hooks/useVehicles'
+
 
 interface VehicleDetailProps {
   vehicleId: string
   onBack: () => void
 }
 
-interface Vehicle {
-  id: string
-  make: string
-  model: string
-  year: number
-  price: number
-  mileage: number
-  fuelType: string
-  transmission: string
-  bodyType: string
-  color: string
-  location: string
-  dealer: string
-  description: string
-  features: string[]
-  images: string[]
-  vin: string
-  engineSize: string
-  doors: number
-  seats: number
-  isNew: boolean
-  listingUrl: string
-  contactPhone?: string
-  contactEmail?: string
-}
-
-// Mock data - in real app this would come from API
-const mockVehicle: Vehicle = {
-  id: '1',
-  make: 'BMW',
-  model: '3 Series',
-  year: 2022,
-  price: 35000,
-  mileage: 15000,
-  fuelType: 'Gasoline',
-  transmission: 'Automatic',
-  bodyType: 'Sedan',
-  color: 'Alpine White',
-  location: 'San Francisco, CA',
-  dealer: 'BMW of San Francisco',
-  description: 'Excellent condition BMW 3 Series with premium package. One owner, clean title, full service history.',
-  features: ['Premium Package', 'Navigation System', 'Leather Seats', 'Sunroof', 'Heated Seats', 'Backup Camera'],
-  images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
-  vin: 'WBA8E9G50HNU12345',
-  engineSize: '2.0L Turbo',
-  doors: 4,
-  seats: 5,
-  isNew: false,
-  listingUrl: 'https://example.com/vehicle/1',
-  contactPhone: '(555) 123-4567',
-  contactEmail: 'sales@bmwsf.com'
-}
-
 export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicleId, onBack }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
   const [isFavorited, setIsFavorited] = useState(false)
 
-  // In real app, fetch vehicle data based on vehicleId
-  // For now, using mock data regardless of vehicleId
-  const vehicle = mockVehicle
+  // Fetch vehicle data from API
+  const { data: vehicle, isLoading, error } = useVehicle(vehicleId)
 
-  // Suppress unused parameter warning - vehicleId will be used when API is connected
-  console.log('Vehicle ID:', vehicleId)
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading vehicle details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !vehicle) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Failed to load vehicle details</p>
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Search
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('it-IT', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'EUR',
       minimumFractionDigits: 0,
     }).format(price)
   }
@@ -119,35 +89,11 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicleId, onBack 
             <CardContent className="p-0">
               <div className="relative">
                 <img
-                  src={vehicle.images[currentImageIndex]}
+                  src={vehicle.imageUrl || '/placeholder-car.jpg'}
                   alt={`${vehicle.make} ${vehicle.model}`}
                   className="w-full h-96 object-cover rounded-t-lg"
                 />
-                {vehicle.isNew && (
-                  <Badge className="absolute top-4 left-4 bg-green-500">
-                    New
-                  </Badge>
-                )}
               </div>
-              {vehicle.images.length > 1 && (
-                <div className="flex space-x-2 p-4">
-                  {vehicle.images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`w-20 h-16 rounded border-2 overflow-hidden ${
-                        index === currentImageIndex ? 'border-blue-500' : 'border-gray-200'
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`View ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -169,7 +115,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicleId, onBack 
                     </div>
                     <div className="flex items-center">
                       <Gauge className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm">Mileage: {formatMileage(vehicle.mileage)} miles</span>
+                      <span className="text-sm">Mileage: {vehicle.mileage ? formatMileage(vehicle.mileage) : 'N/A'} miles</span>
                     </div>
                     <div className="flex items-center">
                       <Fuel className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -185,46 +131,37 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicleId, onBack 
                       <span className="font-medium">Body Type:</span> {vehicle.bodyType}
                     </div>
                     <div className="text-sm">
-                      <span className="font-medium">Color:</span> {vehicle.color}
+                      <span className="font-medium">Source:</span> {vehicle.source}
                     </div>
                     <div className="text-sm">
-                      <span className="font-medium">Engine:</span> {vehicle.engineSize}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Doors:</span> {vehicle.doors}
+                      <span className="font-medium">Location:</span> {vehicle.location}
                     </div>
                   </div>
                 </div>
                 <div className="mt-6">
-                  <h4 className="font-medium mb-2">Description</h4>
-                  <p className="text-sm text-muted-foreground">{vehicle.description}</p>
+                  <h4 className="font-medium mb-2">Vehicle URL</h4>
+                  <a href={vehicle.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                    View Original Listing
+                  </a>
                 </div>
               </TabsContent>
               
               <TabsContent value="features" className="p-6">
-                <div className="grid grid-cols-2 gap-2">
-                  {vehicle.features.map((feature, index) => (
-                    <div key={index} className="flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
+                <div className="text-sm text-muted-foreground">
+                  Features information not available in current data structure.
                 </div>
               </TabsContent>
               
               <TabsContent value="history" className="p-6">
                 <div className="space-y-4">
                   <div className="text-sm">
-                    <span className="font-medium">VIN:</span> {vehicle.vin}
+                    <span className="font-medium">Scraped At:</span> {new Date(vehicle.scrapedAt).toLocaleDateString()}
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">Title:</span> Clean
+                    <span className="font-medium">Source:</span> {vehicle.source}
                   </div>
-                  <div className="text-sm">
-                    <span className="font-medium">Accidents:</span> None reported
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium">Service Records:</span> Available
+                  <div className="text-sm text-muted-foreground">
+                    Additional history information not available in current data structure.
                   </div>
                 </div>
               </TabsContent>
@@ -238,7 +175,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicleId, onBack 
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl font-bold">
-                {formatPrice(vehicle.price)}
+                {vehicle.price ? formatPrice(vehicle.price) : 'Price not available'}
               </CardTitle>
               <div className="flex items-center text-muted-foreground">
                 <MapPin className="h-4 w-4 mr-1" />
@@ -247,23 +184,14 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicleId, onBack 
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm">
-                <span className="font-medium">Dealer:</span> {vehicle.dealer}
+                <span className="font-medium">Source:</span> {vehicle.source}
               </div>
-              
+
               <div className="space-y-2">
-                {vehicle.contactPhone && (
-                  <Button variant="outline" className="w-full justify-start">
-                    <Phone className="h-4 w-4 mr-2" />
-                    {vehicle.contactPhone}
-                  </Button>
-                )}
-                {vehicle.contactEmail && (
-                  <Button variant="outline" className="w-full justify-start">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Contact Dealer
-                  </Button>
-                )}
-                <Button className="w-full">
+                <Button
+                  className="w-full"
+                  onClick={() => window.open(vehicle.url, '_blank')}
+                >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   View Original Listing
                 </Button>

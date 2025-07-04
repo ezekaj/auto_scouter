@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  RefreshCw, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  RefreshCw,
   Globe,
-  Database,
-  Activity,
-  Car
+  Activity
 } from 'lucide-react';
 import { api } from '@/lib/api';
 

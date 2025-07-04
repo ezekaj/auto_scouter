@@ -57,25 +57,74 @@ class ScraperScheduler:
             logger.info("Scraper scheduler stopped")
     
     def add_scraping_job(self):
-        """Add the main scraping job to the scheduler"""
+        """Add enhanced 24/7 scraping jobs to the scheduler"""
         if not scraper_settings.SCRAPING_ENABLED:
             logger.info("Scraping is disabled in configuration")
             return
-        
-        # Schedule scraping every X hours
-        trigger = IntervalTrigger(hours=scraper_settings.SCRAPING_INTERVAL_HOURS)
-        
+
+        # 24/7 Continuous scraping - every 2 hours for comprehensive coverage
+        continuous_trigger = IntervalTrigger(hours=2)
+
         self.scheduler.add_job(
-            func=self.run_scraping_task,
-            trigger=trigger,
-            id='main_scraping_job',
-            name='Main Automotive Scraping Job',
+            func=self.run_comprehensive_scraping_task,
+            trigger=continuous_trigger,
+            id='continuous_scraping_job',
+            name='24/7 Comprehensive Scraping Job',
             max_instances=1,  # Prevent overlapping runs
             coalesce=True,    # Combine missed runs
-            misfire_grace_time=3600  # 1 hour grace period
+            misfire_grace_time=1800  # 30 minute grace period
         )
-        
-        logger.info(f"Scheduled scraping job to run every {scraper_settings.SCRAPING_INTERVAL_HOURS} hours")
+
+        # Peak hours intensive scraping (8 AM - 10 PM) - every 30 minutes
+        peak_hours_trigger = CronTrigger(
+            hour='8-22',  # 8 AM to 10 PM
+            minute='*/30'  # Every 30 minutes
+        )
+
+        self.scheduler.add_job(
+            func=self.run_peak_hours_scraping,
+            trigger=peak_hours_trigger,
+            id='peak_hours_scraping_job',
+            name='Peak Hours Intensive Scraping',
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=900  # 15 minute grace period
+        )
+
+        # Off-peak hours light scraping (10 PM - 8 AM) - every 4 hours
+        off_peak_trigger = CronTrigger(
+            hour='22-7',  # 10 PM to 8 AM
+            minute=0
+        )
+
+        self.scheduler.add_job(
+            func=self.run_off_peak_scraping,
+            trigger=off_peak_trigger,
+            id='off_peak_scraping_job',
+            name='Off-Peak Hours Light Scraping',
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=1800  # 30 minute grace period
+        )
+
+        # Real-time monitoring scraping - every 10 minutes for new listings
+        realtime_trigger = IntervalTrigger(minutes=10)
+
+        self.scheduler.add_job(
+            func=self.run_realtime_monitoring,
+            trigger=realtime_trigger,
+            id='realtime_monitoring_job',
+            name='Real-time New Listings Monitor',
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=300  # 5 minute grace period
+        )
+
+        logger.info("Scheduled 24/7 automated scraping jobs:")
+        logger.info("- Comprehensive scraping: Every 2 hours")
+        logger.info("- Peak hours intensive: Every 30 minutes (8 AM - 10 PM)")
+        logger.info("- Off-peak light: Every 4 hours (10 PM - 8 AM)")
+        logger.info("- Real-time monitoring: Every 10 minutes")
     
     def add_maintenance_jobs(self):
         """Add maintenance and cleanup jobs"""
@@ -223,7 +272,116 @@ class ScraperScheduler:
         finally:
             db.close()
             self.current_session_id = None
-    
+
+    def run_comprehensive_scraping_task(self):
+        """Execute comprehensive 24/7 scraping from all sources"""
+        if self.current_session_id:
+            logger.warning("Scraping session already in progress, skipping comprehensive scraping")
+            return
+
+        session_id = str(uuid.uuid4())
+        self.current_session_id = session_id
+
+        logger.info(f"Starting comprehensive scraping session: {session_id}")
+
+        try:
+            # Use multi-source scraper for comprehensive coverage
+            results = multi_source_scraper.scrape_all_sources(max_vehicles=200)
+
+            total_vehicles = sum(result.vehicles_count for result in results if result.success)
+            successful_sources = [result.source for result in results if result.success]
+            failed_sources = [result.source for result in results if not result.success]
+
+            logger.info(f"Comprehensive scraping completed: {total_vehicles} vehicles from {len(successful_sources)} sources")
+
+            if failed_sources:
+                logger.warning(f"Failed sources: {failed_sources}")
+
+        except Exception as e:
+            logger.error(f"Error in comprehensive scraping task: {e}")
+        finally:
+            self.current_session_id = None
+
+    def run_peak_hours_scraping(self):
+        """Execute intensive scraping during peak hours (8 AM - 10 PM)"""
+        if self.current_session_id:
+            logger.warning("Scraping session already in progress, skipping peak hours scraping")
+            return
+
+        session_id = str(uuid.uuid4())
+        self.current_session_id = session_id
+
+        logger.info(f"Starting peak hours intensive scraping: {session_id}")
+
+        try:
+            # Focus on high-activity sources during peak hours
+            priority_sources = ['autoscout24', 'mobile_de', 'gruppoautouno']
+
+            results = []
+            for source in priority_sources:
+                if source in multi_source_scraper.enabled_sources:
+                    result = multi_source_scraper.scrape_source(source, max_vehicles=100)
+                    results.append(result)
+
+                    if result.success:
+                        logger.info(f"Peak hours scraping - {source}: {result.vehicles_count} vehicles")
+
+            total_vehicles = sum(result.vehicles_count for result in results if result.success)
+            logger.info(f"Peak hours scraping completed: {total_vehicles} vehicles")
+
+        except Exception as e:
+            logger.error(f"Error in peak hours scraping: {e}")
+        finally:
+            self.current_session_id = None
+
+    def run_off_peak_scraping(self):
+        """Execute light scraping during off-peak hours (10 PM - 8 AM)"""
+        if self.current_session_id:
+            logger.warning("Scraping session already in progress, skipping off-peak scraping")
+            return
+
+        session_id = str(uuid.uuid4())
+        self.current_session_id = session_id
+
+        logger.info(f"Starting off-peak light scraping: {session_id}")
+
+        try:
+            # Light scraping with reduced load during off-peak hours
+            results = multi_source_scraper.scrape_all_sources(max_vehicles=50)
+
+            total_vehicles = sum(result.vehicles_count for result in results if result.success)
+            logger.info(f"Off-peak scraping completed: {total_vehicles} vehicles")
+
+        except Exception as e:
+            logger.error(f"Error in off-peak scraping: {e}")
+        finally:
+            self.current_session_id = None
+
+    def run_realtime_monitoring(self):
+        """Execute real-time monitoring for new listings every 10 minutes"""
+        logger.info("Starting real-time monitoring for new listings")
+
+        try:
+            # Quick check for new listings from all sources
+            # Focus on recently added vehicles (last 2 hours)
+            from datetime import datetime, timedelta
+
+            cutoff_time = datetime.utcnow() - timedelta(hours=2)
+
+            # Use a lightweight scraping approach for real-time monitoring
+            results = multi_source_scraper.scrape_all_sources(max_vehicles=20)
+
+            new_vehicles = 0
+            for result in results:
+                if result.success:
+                    new_vehicles += result.vehicles_count
+
+            if new_vehicles > 0:
+                logger.info(f"Real-time monitoring found {new_vehicles} new vehicles")
+
+        except Exception as e:
+            logger.error(f"Error in real-time monitoring: {e}")
+
     def run_cleanup_task(self):
         """Execute data cleanup task"""
         logger.info("Starting daily cleanup task")

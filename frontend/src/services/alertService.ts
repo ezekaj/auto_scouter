@@ -64,11 +64,11 @@ export interface AlertMatch {
 export class AlertService {
   async getAlerts(): Promise<Alert[]> {
     try {
-      const response = await api.get('/alerts')
-      return response.data
+      const response = await api.get('/alerts/')
+      return response.data || []
     } catch (error) {
       console.error('Error getting alerts:', error)
-      throw error
+      return []
     }
   }
 
@@ -84,7 +84,7 @@ export class AlertService {
 
   async createAlert(data: AlertCreateData): Promise<Alert> {
     try {
-      const response = await api.post('/alerts', data)
+      const response = await api.post('/alerts/', data)
       return response.data
     } catch (error) {
       console.error('Error creating alert:', error)
@@ -111,9 +111,54 @@ export class AlertService {
     }
   }
 
+  async toggleAlert(id: number): Promise<Alert> {
+    try {
+      const response = await api.post(`/alerts/${id}/toggle`)
+      return response.data
+    } catch (error) {
+      console.error('Error toggling alert:', error)
+      throw error
+    }
+  }
+
+  async testAlert(id: number): Promise<any> {
+    try {
+      const response = await api.post(`/alerts/${id}/test`)
+      return response.data
+    } catch (error) {
+      console.error('Error testing alert:', error)
+      throw error
+    }
+  }
+
+  async getAlertStats(id: number): Promise<any> {
+    try {
+      const response = await api.get(`/alerts/${id}/stats`)
+      return response.data
+    } catch (error) {
+      console.error('Error getting alert stats:', error)
+      return {}
+    }
+  }
+
+  async getAlertsSummary(): Promise<any> {
+    try {
+      const response = await api.get('/alerts/stats/summary')
+      return response.data
+    } catch (error) {
+      console.error('Error getting alerts summary:', error)
+      return {
+        total_alerts: 0,
+        active_alerts: 0,
+        total_matches: 0,
+        recent_matches: 0
+      }
+    }
+  }
+
   async checkAlert(id: number): Promise<{ alert: Alert; matches: AlertMatch[]; totalMatches: number }> {
     try {
-      const response = await api.post(`/alerts/${id}/check`)
+      const response = await api.post(`/alerts/${id}/test`)
       return response.data
     } catch (error) {
       console.error('Error checking alert:', error)

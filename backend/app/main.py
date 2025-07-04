@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
-from app.routers import scouts, teams, matches, automotive, auth, alerts, cars, notifications, admin
-from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring
+from app.routers import scouts, teams, matches, automotive, auth, cars, admin
+from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs
 from app.core.config import settings
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.health_check import health_service
@@ -54,17 +54,17 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(cars.router, prefix="/api/v1/cars", tags=["cars"])
-app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
-app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
-
 # Enhanced notification system routes
-app.include_router(enhanced_notifications.router, prefix="/api/v1/notifications", tags=["enhanced-notifications"])
+app.include_router(enhanced_notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 app.include_router(enhanced_alerts.router, prefix="/api/v1/alerts", tags=["enhanced-alerts"])
 app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["webhooks"])
 app.include_router(realtime.router, prefix="/api/v1/realtime", tags=["realtime"])
 app.include_router(monitoring.router, prefix="/api/v1/monitoring", tags=["monitoring"])
 
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
+app.include_router(search.router, prefix="/api/v1/search", tags=["search"])
+app.include_router(api_docs.router, prefix="/api/v1/docs", tags=["api-documentation"])
 app.include_router(scouts.router, prefix="/api/v1/scouts", tags=["scouts"])
 app.include_router(teams.router, prefix="/api/v1/teams", tags=["teams"])
 app.include_router(matches.router, prefix="/api/v1/matches", tags=["matches"])

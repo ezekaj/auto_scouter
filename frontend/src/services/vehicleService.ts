@@ -249,7 +249,7 @@ export class VehicleService {
 
   async advancedSearch(filters: VehicleSearchParams): Promise<VehicleSearchResponse> {
     try {
-      const response = await api.post('/cars/search', filters)
+      const response = await api.get('/search/advanced', { params: filters })
       return response.data
     } catch (error) {
       console.error('Error performing advanced search:', error)
@@ -259,16 +259,43 @@ export class VehicleService {
 
   async exportSearchResults(params: VehicleSearchParams, format: 'csv' | 'xlsx' | 'pdf' = 'csv'): Promise<Blob> {
     try {
-      const response = await api.post('/cars/export', {
-        ...params,
-        format
-      }, {
+      const response = await api.get('/monitoring/export/data', {
+        params: { ...params, format },
         responseType: 'blob'
       })
       return response.data
     } catch (error) {
       console.error('Error exporting search results:', error)
       throw error
+    }
+  }
+
+  async getSearchSuggestions(query: string): Promise<string[]> {
+    try {
+      const response = await api.get('/search/suggestions', {
+        params: { q: query }
+      })
+      return response.data || []
+    } catch (error) {
+      console.error('Error getting search suggestions:', error)
+      return []
+    }
+  }
+
+  async getSearchFilters(): Promise<any> {
+    try {
+      const response = await api.get('/search/filters')
+      return response.data
+    } catch (error) {
+      console.error('Error getting search filters:', error)
+      return {
+        makes: [],
+        models: [],
+        years: [],
+        fuelTypes: [],
+        transmissions: [],
+        bodyTypes: []
+      }
     }
   }
 
@@ -309,6 +336,73 @@ export class VehicleService {
     } catch (error) {
       console.error('Error getting health check:', error)
       throw error
+    }
+  }
+
+  // Enhanced methods for 24/7 backend integration
+  async getDashboardOverview(): Promise<any> {
+    try {
+      const response = await api.get('/dashboard/overview')
+      return response.data
+    } catch (error) {
+      console.error('Error getting dashboard overview:', error)
+      return {
+        total_vehicles: 0,
+        recent_vehicles: 0,
+        active_alerts: 0,
+        new_matches: 0,
+        scraping_status: 'unknown'
+      }
+    }
+  }
+
+
+
+
+  async getMultiSourceSessions(): Promise<any> {
+    try {
+      const response = await api.get('/automotive/multi-source-sessions')
+      return response.data
+    } catch (error) {
+      console.error('Error getting multi-source sessions:', error)
+      return []
+    }
+  }
+
+  async triggerMultiSourceScrape(maxVehiclesPerSource: number = 50): Promise<any> {
+    try {
+      const response = await api.post('/automotive/scraper/multi-source', {
+        max_vehicles_per_source: maxVehiclesPerSource
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error triggering multi-source scrape:', error)
+      throw error
+    }
+  }
+
+  async getScraperLogs(): Promise<any> {
+    try {
+      const response = await api.get('/automotive/scraper/logs')
+      return response.data
+    } catch (error) {
+      console.error('Error getting scraper logs:', error)
+      return []
+    }
+  }
+
+  async getAnalytics(): Promise<any> {
+    try {
+      const response = await api.get('/automotive/analytics')
+      return response.data
+    } catch (error) {
+      console.error('Error getting analytics:', error)
+      return {
+        total_vehicles: 0,
+        vehicles_by_source: {},
+        price_distribution: {},
+        popular_makes: []
+      }
     }
   }
 }

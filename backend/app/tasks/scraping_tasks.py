@@ -20,15 +20,162 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task(bind=True)
+def comprehensive_scraping_task(self):
+    """
+    24/7 Comprehensive scraping task - runs every 2 hours
+    Scrapes vehicle data from all configured sources with maximum coverage
+    """
+    session_id = str(uuid.uuid4())
+    task_id = self.request.id
+
+    logger.info(f"Starting comprehensive 24/7 scraping task {task_id} with session {session_id}")
+
+    try:
+        from app.scraper.multi_source_scraper import multi_source_scraper
+
+        # Comprehensive scraping with high vehicle count
+        results = multi_source_scraper.scrape_all_sources(max_vehicles=200)
+
+        total_vehicles = sum(result.vehicles_count for result in results if result.success)
+        successful_sources = [result.source for result in results if result.success]
+        failed_sources = [result.source for result in results if not result.success]
+
+        logger.info(f"Comprehensive scraping completed: {total_vehicles} vehicles from {len(successful_sources)} sources")
+
+        if failed_sources:
+            logger.warning(f"Failed sources in comprehensive scraping: {failed_sources}")
+
+        return {
+            "session_id": session_id,
+            "task_id": task_id,
+            "total_vehicles": total_vehicles,
+            "successful_sources": successful_sources,
+            "failed_sources": failed_sources,
+            "status": "completed"
+        }
+
+    except Exception as e:
+        logger.error(f"Error in comprehensive scraping task {task_id}: {e}")
+        raise self.retry(countdown=300, max_retries=3)  # Retry after 5 minutes
+
+
+@celery_app.task(bind=True)
+def peak_hours_scraping_task(self):
+    """
+    Peak hours intensive scraping task - runs every 30 minutes (8 AM - 10 PM)
+    Focuses on high-activity sources during peak hours
+    """
+    session_id = str(uuid.uuid4())
+    task_id = self.request.id
+
+    logger.info(f"Starting peak hours scraping task {task_id} with session {session_id}")
+
+    try:
+        from app.scraper.multi_source_scraper import multi_source_scraper
+
+        # Focus on priority sources during peak hours
+        priority_sources = ['autoscout24', 'mobile_de', 'gruppoautouno']
+
+        results = []
+        for source in priority_sources:
+            if source in multi_source_scraper.enabled_sources:
+                result = multi_source_scraper.scrape_source(source, max_vehicles=100)
+                results.append(result)
+
+                if result.success:
+                    logger.info(f"Peak hours scraping - {source}: {result.vehicles_count} vehicles")
+
+        total_vehicles = sum(result.vehicles_count for result in results if result.success)
+        logger.info(f"Peak hours scraping completed: {total_vehicles} vehicles")
+
+        return {
+            "session_id": session_id,
+            "task_id": task_id,
+            "total_vehicles": total_vehicles,
+            "sources_scraped": len(results),
+            "status": "completed"
+        }
+
+    except Exception as e:
+        logger.error(f"Error in peak hours scraping task {task_id}: {e}")
+        raise self.retry(countdown=180, max_retries=3)  # Retry after 3 minutes
+
+
+@celery_app.task(bind=True)
+def off_peak_scraping_task(self):
+    """
+    Off-peak light scraping task - runs every 4 hours (10 PM - 8 AM)
+    Light scraping with reduced load during off-peak hours
+    """
+    session_id = str(uuid.uuid4())
+    task_id = self.request.id
+
+    logger.info(f"Starting off-peak scraping task {task_id} with session {session_id}")
+
+    try:
+        from app.scraper.multi_source_scraper import multi_source_scraper
+
+        # Light scraping with reduced load
+        results = multi_source_scraper.scrape_all_sources(max_vehicles=50)
+
+        total_vehicles = sum(result.vehicles_count for result in results if result.success)
+        logger.info(f"Off-peak scraping completed: {total_vehicles} vehicles")
+
+        return {
+            "session_id": session_id,
+            "task_id": task_id,
+            "total_vehicles": total_vehicles,
+            "status": "completed"
+        }
+
+    except Exception as e:
+        logger.error(f"Error in off-peak scraping task {task_id}: {e}")
+        raise self.retry(countdown=600, max_retries=2)  # Retry after 10 minutes
+
+
+@celery_app.task(bind=True)
+def realtime_monitoring_task(self):
+    """
+    Real-time monitoring task - runs every 10 minutes
+    Quick check for new listings from all sources
+    """
+    task_id = self.request.id
+
+    logger.info(f"Starting real-time monitoring task {task_id}")
+
+    try:
+        from app.scraper.multi_source_scraper import multi_source_scraper
+
+        # Lightweight scraping for real-time monitoring
+        results = multi_source_scraper.scrape_all_sources(max_vehicles=20)
+
+        new_vehicles = sum(result.vehicles_count for result in results if result.success)
+
+        if new_vehicles > 0:
+            logger.info(f"Real-time monitoring found {new_vehicles} new vehicles")
+
+        return {
+            "task_id": task_id,
+            "new_vehicles": new_vehicles,
+            "status": "completed"
+        }
+
+    except Exception as e:
+        logger.error(f"Error in real-time monitoring task {task_id}: {e}")
+        # Don't retry real-time monitoring to avoid queue buildup
+        return {"task_id": task_id, "status": "failed", "error": str(e)}
+
+
+@celery_app.task(bind=True)
 def scrape_all_sources(self):
     """
-    Main scraping task that runs every 5 minutes
+    Legacy scraping task - maintained for compatibility
     Scrapes vehicle data from all configured sources
     """
     session_id = str(uuid.uuid4())
     task_id = self.request.id
-    
-    logger.info(f"Starting scraping task {task_id} with session {session_id}")
+
+    logger.info(f"Starting legacy scraping task {task_id} with session {session_id}")
     
     db = SessionLocal()
     try:
@@ -350,3 +497,141 @@ def health_check_scraping():
         
     finally:
         db.close()
+
+
+@celery_app.task(bind=True)
+def performance_monitoring_task(self):
+    """
+    Performance monitoring task - runs every hour
+    Monitors scraping performance and system health
+    """
+    task_id = self.request.id
+
+    logger.info(f"Starting performance monitoring task {task_id}")
+
+    try:
+        db = SessionLocal()
+
+        # Get recent scraping sessions (last 24 hours)
+        from datetime import datetime, timedelta
+        cutoff_time = datetime.utcnow() - timedelta(hours=24)
+
+        # Query recent sessions and calculate performance metrics
+        recent_sessions = db.execute(
+            "SELECT COUNT(*) as session_count, "
+            "AVG(total_vehicles_found) as avg_vehicles, "
+            "AVG(duration_seconds) as avg_duration, "
+            "SUM(total_errors) as total_errors "
+            "FROM scraping_sessions "
+            "WHERE created_at >= %s",
+            (cutoff_time,)
+        ).fetchone()
+
+        # Calculate success rate
+        success_rate = 100.0
+        if recent_sessions and recent_sessions[0] > 0:
+            error_rate = (recent_sessions[3] or 0) / max(recent_sessions[1] or 1, 1)
+            success_rate = max(0, 100 - (error_rate * 100))
+
+        performance_metrics = {
+            "session_count_24h": recent_sessions[0] if recent_sessions else 0,
+            "avg_vehicles_per_session": recent_sessions[1] if recent_sessions else 0,
+            "avg_duration_seconds": recent_sessions[2] if recent_sessions else 0,
+            "total_errors_24h": recent_sessions[3] if recent_sessions else 0,
+            "success_rate_percent": success_rate,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        logger.info(f"Performance metrics: {performance_metrics}")
+
+        # Alert if performance is degraded
+        if success_rate < 80:
+            logger.warning(f"Low success rate detected: {success_rate}%")
+
+        if recent_sessions and recent_sessions[2] and recent_sessions[2] > 300:  # > 5 minutes
+            logger.warning(f"High average duration detected: {recent_sessions[2]} seconds")
+
+        db.close()
+
+        return {
+            "task_id": task_id,
+            "performance_metrics": performance_metrics,
+            "status": "completed"
+        }
+
+    except Exception as e:
+        logger.error(f"Error in performance monitoring task {task_id}: {e}")
+        return {"task_id": task_id, "status": "failed", "error": str(e)}
+
+
+@celery_app.task(bind=True)
+def data_quality_check_task(self):
+    """
+    Data quality check task - runs weekly
+    Checks data quality and performs cleanup
+    """
+    task_id = self.request.id
+
+    logger.info(f"Starting data quality check task {task_id}")
+
+    try:
+        db = SessionLocal()
+
+        # Check for duplicate vehicles
+        duplicate_count = db.execute(
+            "SELECT COUNT(*) FROM ("
+            "SELECT external_id, source, COUNT(*) as cnt "
+            "FROM vehicles "
+            "GROUP BY external_id, source "
+            "HAVING COUNT(*) > 1"
+            ") as duplicates"
+        ).scalar()
+
+        # Check for vehicles with missing critical data
+        missing_data_count = db.execute(
+            "SELECT COUNT(*) FROM vehicles "
+            "WHERE make IS NULL OR model IS NULL OR price IS NULL"
+        ).scalar()
+
+        # Check for very old vehicles (> 1 year without updates)
+        from datetime import datetime, timedelta
+        old_cutoff = datetime.utcnow() - timedelta(days=365)
+
+        old_vehicles_count = db.execute(
+            "SELECT COUNT(*) FROM vehicles "
+            "WHERE last_updated < %s",
+            (old_cutoff,)
+        ).scalar()
+
+        quality_metrics = {
+            "duplicate_vehicles": duplicate_count,
+            "missing_critical_data": missing_data_count,
+            "old_vehicles": old_vehicles_count,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        logger.info(f"Data quality metrics: {quality_metrics}")
+
+        # Perform cleanup if needed
+        cleanup_actions = []
+
+        if duplicate_count > 0:
+            logger.info(f"Found {duplicate_count} duplicate vehicles - cleanup recommended")
+            cleanup_actions.append("duplicate_cleanup_needed")
+
+        if old_vehicles_count > 1000:
+            logger.info(f"Found {old_vehicles_count} old vehicles - archival recommended")
+            cleanup_actions.append("archival_needed")
+
+        db.close()
+
+        return {
+            "task_id": task_id,
+            "quality_metrics": quality_metrics,
+            "cleanup_actions": cleanup_actions,
+            "status": "completed"
+        }
+
+    except Exception as e:
+        logger.error(f"Error in data quality check task {task_id}: {e}")
+        return {"task_id": task_id, "status": "failed", "error": str(e)}

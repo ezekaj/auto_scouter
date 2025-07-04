@@ -24,12 +24,19 @@ celery_app = Celery(
 
 # Celery configuration
 celery_app.conf.update(
-    # Task routing
+    # Enhanced Task routing for 24/7 operations
     task_routes={
         "app.tasks.alert_matching.*": {"queue": "alert_matching"},
         "app.tasks.notification_delivery.*": {"queue": "notifications"},
         "app.tasks.data_cleanup.*": {"queue": "maintenance"},
-        "app.tasks.scraping_tasks.*": {"queue": "scraping"},
+        "app.tasks.scraping_tasks.scrape_all_sources": {"queue": "scraping"},
+        "app.tasks.scraping_tasks.comprehensive_scraping_task": {"queue": "scraping"},
+        "app.tasks.scraping_tasks.peak_hours_scraping_task": {"queue": "scraping"},
+        "app.tasks.scraping_tasks.off_peak_scraping_task": {"queue": "scraping"},
+        "app.tasks.scraping_tasks.realtime_monitoring_task": {"queue": "monitoring"},
+        "app.tasks.scraping_tasks.performance_monitoring_task": {"queue": "monitoring"},
+        "app.tasks.scraping_tasks.data_quality_check_task": {"queue": "maintenance"},
+        "app.tasks.scraping_tasks.cleanup_inactive_listings": {"queue": "maintenance"},
     },
     
     # Task execution settings
@@ -53,37 +60,88 @@ celery_app.conf.update(
     task_default_retry_delay=60,  # 1 minute
     task_max_retries=3,
     
-    # Beat schedule for periodic tasks
+    # Enhanced 24/7 Beat schedule for automated scraping
     beat_schedule={
-        "scrape-all-sources": {
-            "task": "app.tasks.scraping_tasks.scrape_all_sources",
-            "schedule": 300.0,  # Every 5 minutes
+        # 24/7 Comprehensive Scraping - Every 2 hours
+        "comprehensive-scraping": {
+            "task": "app.tasks.scraping_tasks.comprehensive_scraping_task",
+            "schedule": 7200.0,  # Every 2 hours
             "options": {"queue": "scraping"}
         },
+
+        # Peak Hours Intensive Scraping - Every 30 minutes (8 AM - 10 PM)
+        "peak-hours-scraping": {
+            "task": "app.tasks.scraping_tasks.peak_hours_scraping_task",
+            "schedule": "*/30 8-22 * * *",  # Every 30 minutes from 8 AM to 10 PM
+            "options": {"queue": "scraping"}
+        },
+
+        # Off-Peak Light Scraping - Every 4 hours (10 PM - 8 AM)
+        "off-peak-scraping": {
+            "task": "app.tasks.scraping_tasks.off_peak_scraping_task",
+            "schedule": "0 22,2,6 * * *",  # At 10 PM, 2 AM, 6 AM
+            "options": {"queue": "scraping"}
+        },
+
+        # Real-time Monitoring - Every 10 minutes
+        "realtime-monitoring": {
+            "task": "app.tasks.scraping_tasks.realtime_monitoring_task",
+            "schedule": 600.0,  # Every 10 minutes
+            "options": {"queue": "monitoring"}
+        },
+
+        # Legacy scraping task (reduced frequency)
+        "scrape-all-sources": {
+            "task": "app.tasks.scraping_tasks.scrape_all_sources",
+            "schedule": 1800.0,  # Every 30 minutes (reduced from 5 minutes)
+            "options": {"queue": "scraping"}
+        },
+
+        # Alert Processing
         "run-alert-matching": {
             "task": "app.tasks.alert_matching.run_alert_matching_task",
             "schedule": 300.0,  # Every 5 minutes
             "options": {"queue": "alert_matching"}
         },
+
+        # Notification Processing
         "process-notification-queue": {
             "task": "app.tasks.notification_delivery.process_notification_queue",
             "schedule": 60.0,  # Every minute
             "options": {"queue": "notifications"}
         },
+
+        # Maintenance Tasks
         "cleanup-old-notifications": {
             "task": "app.tasks.data_cleanup.cleanup_old_notifications",
             "schedule": 3600.0,  # Every hour
             "options": {"queue": "maintenance"}
         },
+
         "cleanup-inactive-listings": {
             "task": "app.tasks.scraping_tasks.cleanup_inactive_listings",
             "schedule": 86400.0,  # Daily
             "options": {"queue": "maintenance"}
         },
+
         "generate-daily-digest": {
             "task": "app.tasks.notification_delivery.generate_daily_digest",
             "schedule": "0 8 * * *",  # Daily at 8 AM
             "options": {"queue": "notifications"}
+        },
+
+        # Performance Monitoring
+        "scraping-performance-check": {
+            "task": "app.tasks.scraping_tasks.performance_monitoring_task",
+            "schedule": 3600.0,  # Every hour
+            "options": {"queue": "monitoring"}
+        },
+
+        # Data Quality Checks
+        "data-quality-check": {
+            "task": "app.tasks.scraping_tasks.data_quality_check_task",
+            "schedule": "0 4 * * 0",  # Weekly on Sunday at 4 AM
+            "options": {"queue": "maintenance"}
         },
     },
     

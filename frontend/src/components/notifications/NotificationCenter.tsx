@@ -33,6 +33,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen =
     dateTo: null
   });
 
+  // Use the notification hook
   const {
     notifications,
     unreadCount,
@@ -41,45 +42,24 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen =
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    fetchNotifications,
-    fetchUnreadNotifications
-  } = useNotifications();
+    fetchNotifications
+  } = useNotifications()
 
   useEffect(() => {
     if (isOpen) {
-      if (activeTab === 'unread') {
-        fetchUnreadNotifications();
-      } else {
-        fetchNotifications(filters);
-      }
+      fetchNotifications(filters)
     }
-  }, [isOpen, activeTab, filters]);
+  }, [isOpen, activeTab, filters, fetchNotifications]);
 
-  const handleMarkAllRead = async () => {
-    try {
-      await markAllAsRead();
-      fetchNotifications(filters);
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
-    }
+  const handleMarkAllRead = () => {
+    markAllAsRead()
   };
 
-  const handleNotificationAction = async (id: number, action: 'read' | 'delete') => {
-    try {
-      if (action === 'read') {
-        await markAsRead(id);
-      } else if (action === 'delete') {
-        await deleteNotification(id);
-      }
-      
-      // Refresh notifications
-      if (activeTab === 'unread') {
-        fetchUnreadNotifications();
-      } else {
-        fetchNotifications(filters);
-      }
-    } catch (error) {
-      console.error(`Failed to ${action} notification:`, error);
+  const handleNotificationAction = (id: number, action: 'read' | 'delete') => {
+    if (action === 'read') {
+      markAsRead(Number(id))
+    } else if (action === 'delete') {
+      deleteNotification(Number(id))
     }
   };
 

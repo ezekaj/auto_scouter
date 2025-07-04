@@ -34,10 +34,32 @@ class ScraperSettings(BaseSettings):
     SELENIUM_TIMEOUT: int = 30
     SELENIUM_PAGE_LOAD_TIMEOUT: int = 30
     
-    # Scraping Schedule Configuration
+    # 24/7 Automated Scraping Schedule Configuration
     SCRAPING_ENABLED: bool = True
-    SCRAPING_INTERVAL_HOURS: int = 8
+    SCRAPING_INTERVAL_HOURS: int = 8  # Legacy setting
     SCRAPING_START_HOUR: int = 2  # Start at 2 AM to avoid peak hours
+
+    # Enhanced 24/7 Scheduling Configuration
+    ENABLE_24_7_SCRAPING: bool = True
+    COMPREHENSIVE_SCRAPING_INTERVAL_HOURS: int = 2  # Every 2 hours
+    PEAK_HOURS_SCRAPING_INTERVAL_MINUTES: int = 30  # Every 30 minutes during peak hours
+    OFF_PEAK_SCRAPING_INTERVAL_HOURS: int = 4  # Every 4 hours during off-peak
+    REALTIME_MONITORING_INTERVAL_MINUTES: int = 10  # Every 10 minutes for new listings
+
+    # Peak Hours Configuration (8 AM - 10 PM)
+    PEAK_HOURS_START: int = 8  # 8 AM
+    PEAK_HOURS_END: int = 22   # 10 PM
+
+    # Scraping Load Configuration
+    COMPREHENSIVE_MAX_VEHICLES: int = 200  # Max vehicles per comprehensive scraping
+    PEAK_HOURS_MAX_VEHICLES: int = 100     # Max vehicles per source during peak hours
+    OFF_PEAK_MAX_VEHICLES: int = 50        # Max vehicles per source during off-peak
+    REALTIME_MAX_VEHICLES: int = 20        # Max vehicles per source for real-time monitoring
+
+    # Performance Optimization
+    ENABLE_ADAPTIVE_SCHEDULING: bool = True  # Adjust intervals based on activity
+    ENABLE_LOAD_BALANCING: bool = True       # Balance load across sources
+    ENABLE_SMART_RETRY: bool = True          # Smart retry logic for failed scraping
 
     # Multi-Source Configuration
     ENABLE_AUTOSCOUT24: bool = True

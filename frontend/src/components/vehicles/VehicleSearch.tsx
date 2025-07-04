@@ -232,7 +232,7 @@ export const VehicleSearch: React.FC = () => {
           isOpen={showSavedSearches}
           onClose={() => setShowSavedSearches(false)}
           onLoadSearch={(search) => {
-            setSearchTerm(search.searchTerm || '')
+            setSearchTerm(search.search_term || '')
             setFilters(search.filters || {})
             setShowSavedSearches(false)
           }}

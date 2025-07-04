@@ -98,7 +98,7 @@ export const useNotifications = () => {
 
   const markAsRead = useCallback(async (notificationId: number) => {
     try {
-      await api.post(`/notifications/${notificationId}/mark-read`);
+      await api.patch(`/notifications/${notificationId}/read`);
       
       // Update local state
       setNotifications(prev => 
@@ -118,7 +118,7 @@ export const useNotifications = () => {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await api.post('/notifications/mark-all-read');
+      await api.patch('/notifications/mark-all-read');
       
       // Update local state
       setNotifications(prev => 
