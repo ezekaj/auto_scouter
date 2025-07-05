@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     EMAIL_ENABLED: bool = os.getenv("EMAIL_ENABLED", "true").lower() == "true"
     EMAIL_TEST_MODE: bool = os.getenv("EMAIL_TEST_MODE", "true").lower() == "true"
 
+    # Logging Configuration
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    LOG_TO_FILE: bool = os.getenv("LOG_TO_FILE", "true").lower() == "true"
+    LOG_JSON_FORMAT: bool = os.getenv("LOG_JSON_FORMAT", "false").lower() == "true"
+    LOG_MAX_SIZE: int = int(os.getenv("LOG_MAX_SIZE", "10485760"))  # 10MB
+    LOG_BACKUP_COUNT: int = int(os.getenv("LOG_BACKUP_COUNT", "5"))
+
     # Push Notification Configuration
     FIREBASE_CREDENTIALS_PATH: str = ""
     PUSH_NOTIFICATION_ENABLED: bool = False
