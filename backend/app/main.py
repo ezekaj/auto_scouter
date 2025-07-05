@@ -2,13 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from app.routers import scouts, teams, matches, automotive, auth, cars, admin
-from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs, email, comparison, price_tracking, analytics, rate_limiting, logging
+from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs, email, comparison, price_tracking, analytics, rate_limiting, logging, i18n
 from app.core.config import settings
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.health_check import health_service
 from app.middleware.rate_limiting import RateLimitMiddleware, RateLimitService
 from app.core.logging_config import setup_logging
 from app.middleware.logging_middleware import LoggingMiddleware
+from app.middleware.i18n_middleware import I18nMiddleware
 from app.models.base import engine, Base
 
 # Initialize logging first
@@ -75,6 +76,9 @@ app.middleware("http")(rate_limit_middleware)
 logging_middleware = LoggingMiddleware(app)
 app.add_middleware(LoggingMiddleware)
 
+# Add i18n middleware
+app.add_middleware(I18nMiddleware)
+
 # Initialize rate limiting service
 rate_limit_service = RateLimitService(rate_limit_middleware)
 rate_limiting.set_rate_limit_service(rate_limit_service)
@@ -103,6 +107,7 @@ app.include_router(price_tracking.router, prefix="/api/v1/price-tracking", tags=
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
 app.include_router(rate_limiting.router, prefix="/api/v1/rate-limiting", tags=["rate-limiting"])
 app.include_router(logging.router, prefix="/api/v1/logging", tags=["logging"])
+app.include_router(i18n.router, prefix="/api/v1/i18n", tags=["i18n"])
 
 
 # Event handlers for background tasks

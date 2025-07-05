@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/contexts/AuthContext'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
+import { useTranslation } from 'react-i18next'
 
 interface HeaderProps {
   onMenuClick?: () => void
@@ -13,6 +15,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -41,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search vehicles, alerts..."
+              placeholder={t('common.search') + "..."}
               className="pl-10"
               aria-label="Global search"
             />
@@ -50,6 +53,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
         {/* Right side actions */}
         <div className="flex items-center space-x-4">
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Notifications */}
           <Link to="/notifications">
             <Button variant="ghost" size="icon" className="relative">
@@ -78,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+                {t('common.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

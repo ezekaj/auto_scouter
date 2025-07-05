@@ -8,26 +8,27 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { useTranslation } from 'react-i18next'
 
-const navigation = [
+const getNavigation = (t: any) => [
   {
-    name: 'Dashboard',
+    name: t('navigation.dashboard'),
     href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
-    name: 'Vehicle Search',
+    name: t('navigation.vehicles'),
     href: '/search',
     icon: Search,
   },
   {
-    name: 'My Alerts',
+    name: t('navigation.alerts'),
     href: '/alerts',
     icon: AlertTriangle,
     badge: '5',
   },
   {
-    name: 'Notifications',
+    name: t('common.notifications'),
     href: '/notifications',
     icon: Bell,
     badge: '3',
@@ -35,6 +36,9 @@ const navigation = [
 ]
 
 export const Sidebar: React.FC = () => {
+  const { t } = useTranslation()
+  const navigation = getNavigation(t)
+
   return (
     <aside
       className="w-64 border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
 import { getErrorMessage } from '@/lib/api'
+import { useTranslation } from 'react-i18next'
 
 export const RegisterForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ export const RegisterForm: React.FC = () => {
 
   const { register } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const validateForm = () => {
     if (formData.password !== formData.confirmPassword) {
