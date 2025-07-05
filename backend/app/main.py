@@ -2,10 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from app.routers import scouts, teams, matches, automotive, auth, cars, admin
-from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs, email, comparison, price_tracking, analytics
+from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs, email, comparison, price_tracking, analytics, rate_limiting
 from app.core.config import settings
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.health_check import health_service
+from app.middleware.rate_limiting import RateLimitMiddleware, RateLimitService
 from app.models.base import engine, Base
 
 app = FastAPI(
@@ -51,6 +52,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize rate limiting
+try:
+    import redis
+    redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+    redis_client.ping()  # Test connection
+    rate_limit_middleware = RateLimitMiddleware(redis_client)
+    print("Rate limiting initialized with Redis storage")
+except Exception as e:
+    print(f"Redis unavailable for rate limiting, using in-memory storage: {str(e)}")
+    rate_limit_middleware = RateLimitMiddleware()
+
+# Add rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
+
+# Initialize rate limiting service
+rate_limit_service = RateLimitService(rate_limit_middleware)
+rate_limiting.set_rate_limit_service(rate_limit_service)
+
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(cars.router, prefix="/api/v1/cars", tags=["cars"])
@@ -73,6 +92,7 @@ app.include_router(email.router, prefix="/api/v1/email", tags=["email"])
 app.include_router(comparison.router, prefix="/api/v1/comparisons", tags=["comparisons"])
 app.include_router(price_tracking.router, prefix="/api/v1/price-tracking", tags=["price-tracking"])
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
+app.include_router(rate_limiting.router, prefix="/api/v1/rate-limiting", tags=["rate-limiting"])
 
 
 # Event handlers for background tasks
