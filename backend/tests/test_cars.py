@@ -20,7 +20,7 @@ class TestCarListings:
         """Create sample car data for testing"""
         cars = [
             VehicleListing(
-                external_id="car1",
+            external_id="car1",
                 listing_url="https://example.com/car1",
                 make="Volkswagen",
                 model="Golf",
@@ -30,11 +30,13 @@ class TestCarListings:
                 fuel_type="diesel",
                 transmission="manual",
                 city="Napoli",
-                is_active=True,
-                scraped_at=datetime.utcnow()
+                source_website="test_source",
+            is_active=True,
+                scraped_at=datetime.utcnow(
+        )
             ),
             VehicleListing(
-                external_id="car2",
+            external_id="car2",
                 listing_url="https://example.com/car2",
                 make="BMW",
                 model="X3",
@@ -44,11 +46,13 @@ class TestCarListings:
                 fuel_type="gasoline",
                 transmission="automatic",
                 city="Milano",
-                is_active=True,
-                scraped_at=datetime.utcnow()
+                source_website="test_source",
+            is_active=True,
+                scraped_at=datetime.utcnow(
+        )
             ),
             VehicleListing(
-                external_id="car3",
+            external_id="car3",
                 listing_url="https://example.com/car3",
                 make="Volkswagen",
                 model="Passat",
@@ -58,11 +62,13 @@ class TestCarListings:
                 fuel_type="diesel",
                 transmission="automatic",
                 city="Roma",
-                is_active=True,
-                scraped_at=datetime.utcnow() - timedelta(hours=1)
+                source_website="test_source",
+            is_active=True,
+                scraped_at=datetime.utcnow(
+        ) - timedelta(hours=1)
             ),
             VehicleListing(
-                external_id="car4",
+            external_id="car4",
                 listing_url="https://example.com/car4",
                 make="Audi",
                 model="A4",
@@ -72,8 +78,10 @@ class TestCarListings:
                 fuel_type="gasoline",
                 transmission="automatic",
                 city="Torino",
-                is_active=False,  # Inactive car
-                scraped_at=datetime.utcnow() - timedelta(days=2)
+                source_website="test_source",
+            is_active=False,  # Inactive car
+                scraped_at=datetime.utcnow(
+        ) - timedelta(days=2)
             )
         ]
         

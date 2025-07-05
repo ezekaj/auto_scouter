@@ -37,11 +37,17 @@ def test_db():
 
 @pytest.fixture
 def db_session(test_db):
-    """Create a database session for testing"""
+    """Create a database session for testing with proper cleanup"""
     session = test_db()
     try:
         yield session
     finally:
+        # Clean up all data after each test
+        session.rollback()
+        # Delete all data from all tables
+        for table in reversed(Base.metadata.sorted_tables):
+            session.execute(table.delete())
+        session.commit()
         session.close()
 
 

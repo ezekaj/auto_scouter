@@ -34,7 +34,9 @@ class TestAlertMatching:
             model="3 Series",
             min_price=20000,
             max_price=40000,
-            min_year=2018,
+            min_min_year=2018,
+            max_year=2018,
+            max_min_year=2022,
             max_year=2022,
             is_active=True
         )
@@ -45,7 +47,8 @@ class TestAlertMatching:
         listing = VehicleListing(
             make="BMW",
             model="3 Series",
-            year=2020,
+            min_year=2020,
+            max_year=2020,
             price=30000,
             mileage=50000,
             fuel_type="Petrol",
@@ -88,7 +91,8 @@ class TestAlertMatching:
         listing = VehicleListing(
             make="Audi",
             model="A4",
-            year=2019,
+            min_year=2019,
+            max_year=2019,
             price=35000,
             fuel_type="Petrol",  # Different fuel type
             transmission="Manual",
@@ -127,7 +131,8 @@ class TestAlertMatching:
         listing = VehicleListing(
             make="Toyota",
             model="Corolla",
-            year=2020,
+            min_year=2020,
+            max_year=2020,
             price=20000,
             fuel_type="Petrol",
             city="Hamburg",
@@ -161,7 +166,8 @@ class TestAlertMatching:
         listing = VehicleListing(
             make="Volkswagen",
             model="Golf",
-            year=2020,
+            min_year=2020,
+            max_year=2020,
             price=31500,  # 5% over max price
             fuel_type="Petrol",
             city="Frankfurt",
@@ -312,7 +318,8 @@ class TestNotificationDelivery:
         # Mock current time to be in quiet hours
         with patch('app.services.enhanced_notification_delivery.datetime') as mock_datetime:
             mock_datetime.utcnow.return_value = datetime.strptime("23:30", "%H:%M").replace(
-                year=2024, month=1, day=1
+                min_year=2024,
+            max_year=2024, month=1, day=1
             )
             mock_datetime.strftime = datetime.strftime
             
@@ -423,7 +430,8 @@ class TestScrapingIntegration:
         listing = VehicleListing(
             make="Tesla",
             model="Model 3",
-            year=2022,
+            min_year=2022,
+            max_year=2022,
             price=45000,
             is_active=True,
             scraped_at=datetime.utcnow()
@@ -487,7 +495,8 @@ class TestSystemValidation:
         listing = VehicleListing(
             make="Mercedes",
             model="C-Class",
-            year=2021,
+            min_year=2021,
+            max_year=2021,
             price=45000,
             fuel_type="Petrol",
             transmission="Automatic",
@@ -541,7 +550,7 @@ class TestSystemValidation:
             user = User(
                 username=f"testuser{i}",
                 email=f"test{i}@example.com",
-                hashed_password="hashed"
+                password_hash="hashed"
             )
             db_session.add(user)
             users.append(user)
@@ -551,11 +560,11 @@ class TestSystemValidation:
         for user in users:
             for j in range(5):
                 alert = Alert(
-                    user_id=user.id,
+            user_id=user.id,
                     name=f"Alert {j}",
                     make=["BMW", "Audi", "Mercedes", "Volkswagen", "Toyota"][j],
                     is_active=True
-                )
+        )
                 db_session.add(alert)
                 alerts.append(alert)
         
@@ -565,7 +574,8 @@ class TestSystemValidation:
             listing = VehicleListing(
                 make=makes[i % len(makes)],
                 model=f"Model {i}",
-                year=2020 + (i % 3),
+                min_year=2020,
+            max_year=2020 + (i % 3),
                 price=20000 + (i * 500),
                 is_active=True,
                 scraped_at=datetime.utcnow()

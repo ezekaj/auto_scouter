@@ -36,11 +36,15 @@ class TestAlertMatchingEngine:
         """Create a test alert"""
         alert = Alert(
             user_id=test_user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf",
             min_price=15000,
             max_price=25000,
-            year=2020,
+            min_min_year=2020,
+            max_year=2020,
+            max_min_year=2022,
+            max_year=2022,
             fuel_type="diesel",
             transmission="manual",
             city="Napoli"
@@ -58,14 +62,17 @@ class TestAlertMatchingEngine:
             listing_url="https://example.com/match-car-1",
             make="Volkswagen",
             model="Golf",
-            year=2020,
+            min_year=2020,
+            max_year=2020,
             price=18500.0,
             mileage=45000,
             fuel_type="diesel",
             transmission="manual",
             city="Napoli",
+            source_website="test_source",
             is_active=True,
-            scraped_at=datetime.utcnow()
+            scraped_at=datetime.utcnow(
+        )
         )
         db_session.add(listing)
         db_session.commit()
@@ -80,14 +87,17 @@ class TestAlertMatchingEngine:
             listing_url="https://example.com/no-match-car-1",
             make="BMW",
             model="X3",
-            year=2019,
+            min_year=2019,
+            max_year=2019,
             price=35000.0,
             mileage=30000,
             fuel_type="gasoline",
             transmission="automatic",
             city="Milano",
+            source_website="test_source",
             is_active=True,
-            scraped_at=datetime.utcnow()
+            scraped_at=datetime.utcnow(
+        )
         )
         db_session.add(listing)
         db_session.commit()
@@ -122,6 +132,7 @@ class TestAlertMatchingEngine:
         # Create alert with only make and price range
         alert = Alert(
             user_id=test_user.id,
+            name="Test Alert",
             make="Volkswagen",
             min_price=15000,
             max_price=25000
@@ -135,10 +146,13 @@ class TestAlertMatchingEngine:
             listing_url="https://example.com/partial-match-1",
             make="Volkswagen",
             model="Passat",  # Different model
-            year=2019,       # Different year
+            min_year=2019,
+            max_year=2019,       # Different year
             price=20000.0,   # Matches price range
+            source_website="test_source",
             is_active=True,
-            scraped_at=datetime.utcnow()
+            scraped_at=datetime.utcnow(
+        )
         )
         db_session.add(listing)
         db_session.commit()
@@ -159,22 +173,37 @@ class TestAlertMatchingEngine:
         alert = Alert(min_price=15000, max_price=25000)
         
         # Test listing within range
-        listing_in_range = VehicleListing(price=20000.0)
+        listing_in_range = VehicleListing(
+            price=20000.0,
+            source_website="test_source"
+        )
         assert matcher._match_price_range(alert, listing_in_range) is True
         
         # Test listing below range
-        listing_below = VehicleListing(price=10000.0)
+        listing_below = VehicleListing(
+            price=10000.0,
+            source_website="test_source"
+        )
         assert matcher._match_price_range(alert, listing_below) is False
         
         # Test listing above range
-        listing_above = VehicleListing(price=30000.0)
+        listing_above = VehicleListing(
+            price=30000.0,
+            source_website="test_source"
+        )
         assert matcher._match_price_range(alert, listing_above) is False
         
         # Test edge cases
-        listing_min = VehicleListing(price=15000.0)
+        listing_min = VehicleListing(
+            price=15000.0,
+            source_website="test_source"
+        )
         assert matcher._match_price_range(alert, listing_min) is True
         
-        listing_max = VehicleListing(price=25000.0)
+        listing_max = VehicleListing(
+            price=25000.0,
+            source_website="test_source"
+        )
         assert matcher._match_price_range(alert, listing_max) is True
     
     def test_make_model_fuzzy_matching(self, db_session: Session):
@@ -288,10 +317,13 @@ class TestAlertMatchingEngine:
             listing_url="https://example.com/old-car",
             make="Volkswagen",
             model="Golf",
-            year=2020,
+            min_year=2020,
+            max_year=2020,
             price=18500.0,
+            source_website="test_source",
             is_active=True,
-            scraped_at=datetime.utcnow() - timedelta(hours=3)
+            scraped_at=datetime.utcnow(
+        ) - timedelta(hours=3)
         )
         db_session.add(old_listing)
         
@@ -301,10 +333,13 @@ class TestAlertMatchingEngine:
             listing_url="https://example.com/new-car",
             make="Volkswagen",
             model="Golf",
-            year=2020,
+            min_year=2020,
+            max_year=2020,
             price=18500.0,
+            source_website="test_source",
             is_active=True,
-            scraped_at=datetime.utcnow()
+            scraped_at=datetime.utcnow(
+        )
         )
         db_session.add(new_listing)
         db_session.commit()
@@ -331,6 +366,7 @@ class TestAlertMatchingEngine:
         # Create inactive alert
         inactive_alert = Alert(
             user_id=test_user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf",
             is_active=False
@@ -363,6 +399,7 @@ class TestAlertMatchingEngine:
         # Create alert for inactive user
         alert = Alert(
             user_id=inactive_user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf"
         )

@@ -92,6 +92,7 @@ class TestAlertManagement:
         # Create test alerts
         alert1 = Alert(
             user_id=user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf",
             min_price=15000,
@@ -99,6 +100,7 @@ class TestAlertManagement:
         )
         alert2 = Alert(
             user_id=user.id,
+            name="Test Alert",
             make="BMW",
             model="X3",
             min_price=30000,
@@ -129,6 +131,7 @@ class TestAlertManagement:
         
         alert = Alert(
             user_id=user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf",
             min_price=15000,
@@ -160,6 +163,7 @@ class TestAlertManagement:
         
         alert = Alert(
             user_id=user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf",
             min_price=15000,
@@ -190,6 +194,7 @@ class TestAlertManagement:
         
         alert = Alert(
             user_id=user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf",
             min_price=15000,
@@ -213,6 +218,7 @@ class TestAlertManagement:
         
         alert = Alert(
             user_id=user.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf",
             min_price=15000,
@@ -241,9 +247,18 @@ class TestAlertManagement:
         client, user = authenticated_client
         
         # Create test alerts
-        alert1 = Alert(user_id=user.id, make="Volkswagen", is_active=True)
-        alert2 = Alert(user_id=user.id, make="BMW", is_active=True)
-        alert3 = Alert(user_id=user.id, make="Audi", is_active=False)
+        alert1 = Alert(
+            user_id=user.id,
+            name="Test Alert", make="Volkswagen", is_active=True
+        )
+        alert2 = Alert(
+            user_id=user.id,
+            name="Test Alert", make="BMW", is_active=True
+        )
+        alert3 = Alert(
+            user_id=user.id,
+            name="Test Alert", make="Audi", is_active=False
+        )
         
         db_session.add_all([alert1, alert2, alert3])
         db_session.commit()
@@ -282,6 +297,7 @@ class TestAlertManagement:
         # Create alert for user1
         alert = Alert(
             user_id=user1.id,
+            name="Test Alert",
             make="Volkswagen",
             model="Golf"
         )
