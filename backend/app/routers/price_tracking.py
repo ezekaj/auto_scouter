@@ -245,7 +245,7 @@ async def get_price_statistics(
 @router.get("/trending-vehicles")
 async def get_trending_vehicles(
     limit: int = Query(10, ge=1, le=50),
-    trend_type: str = Query("price_drops", regex="^(price_drops|price_increases|most_volatile)$"),
+    trend_type: str = Query("price_drops", pattern="^(price_drops|price_increases|most_volatile)$"),
     days: int = Query(7, ge=1, le=30),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
