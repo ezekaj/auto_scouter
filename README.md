@@ -2,6 +2,8 @@
 
 An automated vehicle scouting and monitoring system with 24/7 web scraping capabilities, built with React (frontend) and FastAPI (backend).
 
+**🎯 Status: PRODUCTION READY** | **📱 Mobile App Available** | **🌍 Albanian Support**
+
 ## 🚀 Features
 
 - **Vehicle Search**: Advanced search and filtering of scraped vehicles
