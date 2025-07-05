@@ -21,6 +21,7 @@ class User(Base):
     alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     notification_preferences = relationship("NotificationPreferences", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    vehicle_comparisons = relationship("VehicleComparison", back_populates="user", cascade="all, delete-orphan")
 
 
 class Scout(Base):

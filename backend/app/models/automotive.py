@@ -138,16 +138,39 @@ class PriceHistory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     vehicle_id = Column(Integer, ForeignKey("vehicle_listings.id"), nullable=False)
-    
+
+    # Price information
     price = Column(Float, nullable=False)
     currency = Column(String(3), default="EUR")
     price_change = Column(Float)  # Change from previous price
     change_percentage = Column(Float)  # Percentage change
-    
+
+    # Price context
+    original_price = Column(Float, nullable=True)  # Original listing price
+    discount_amount = Column(Float, nullable=True)  # Discount from original
+    price_type = Column(String(20), default="fixed")  # fixed, negotiable, on_request
+
+    # Market context
+    market_position = Column(String(20), nullable=True)  # above_market, below_market, at_market
+    days_on_market = Column(Integer, default=0)  # Days since first listing
+
+    # Source information
+    source_website = Column(String(100), nullable=True)
+    source_url = Column(String(500), nullable=True)
+
+    # Metadata
     recorded_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-    
+    is_active = Column(Boolean, default=True)  # Whether this price is still current
+
     # Relationships
     vehicle = relationship("VehicleListing", back_populates="price_history")
+
+    # Indexes
+    __table_args__ = (
+        Index('idx_vehicle_price_history', 'vehicle_id', 'recorded_at'),
+        Index('idx_price_changes', 'price_change', 'recorded_at'),
+        Index('idx_active_prices', 'is_active', 'recorded_at'),
+    )
 
 
 class ScrapingLog(Base):

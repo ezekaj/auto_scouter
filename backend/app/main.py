@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from app.routers import scouts, teams, matches, automotive, auth, cars, admin
-from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs
+from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs, email, comparison, price_tracking
 from app.core.config import settings
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.health_check import health_service
@@ -69,6 +69,9 @@ app.include_router(scouts.router, prefix="/api/v1/scouts", tags=["scouts"])
 app.include_router(teams.router, prefix="/api/v1/teams", tags=["teams"])
 app.include_router(matches.router, prefix="/api/v1/matches", tags=["matches"])
 app.include_router(automotive.router, prefix="/api/v1/automotive", tags=["automotive"])
+app.include_router(email.router, prefix="/api/v1/email", tags=["email"])
+app.include_router(comparison.router, prefix="/api/v1/comparisons", tags=["comparisons"])
+app.include_router(price_tracking.router, prefix="/api/v1/price-tracking", tags=["price-tracking"])
 
 
 # Event handlers for background tasks

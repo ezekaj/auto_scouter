@@ -19,13 +19,16 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # Email Configuration
-    SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
-    SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
-    SMTP_TLS: bool = True
-    EMAIL_FROM: str = "noreply@autoscouter.com"
-    EMAIL_FROM_NAME: str = "Auto Scouter"
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_TLS: bool = os.getenv("SMTP_TLS", "true").lower() == "true"
+    SMTP_SSL: bool = os.getenv("SMTP_SSL", "false").lower() == "true"
+    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "noreply@autoscouter.com")
+    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "Auto Scouter")
+    EMAIL_ENABLED: bool = os.getenv("EMAIL_ENABLED", "true").lower() == "true"
+    EMAIL_TEST_MODE: bool = os.getenv("EMAIL_TEST_MODE", "true").lower() == "true"
 
     # Push Notification Configuration
     FIREBASE_CREDENTIALS_PATH: str = ""
