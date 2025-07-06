@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Index
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Index, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
@@ -160,4 +160,37 @@ class Alert(Base):
         Index('idx_alert_criteria', 'make', 'model', 'min_price', 'max_price'),
         Index('idx_alert_location', 'city', 'region'),
         Index('idx_alert_frequency', 'notification_frequency', 'last_triggered'),
+    )
+
+
+class OAuthAccount(Base):
+    """OAuth account model for social login integration"""
+    __tablename__ = "oauth_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+
+    # OAuth provider information
+    provider = Column(String(50), nullable=False, index=True)  # google, facebook, github
+    provider_user_id = Column(String(255), nullable=False, index=True)  # User ID from provider
+
+    # OAuth tokens
+    access_token = Column(Text, nullable=True)  # OAuth access token
+    refresh_token = Column(Text, nullable=True)  # OAuth refresh token
+    token_expires_at = Column(DateTime(timezone=True), nullable=True)  # Token expiry
+
+    # User data from provider
+    user_data = Column(JSON, nullable=True)  # Raw user data from OAuth provider
+
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User", backref="oauth_accounts")
+
+    # Indexes for performance
+    __table_args__ = (
+        Index('idx_oauth_provider_user', 'provider', 'provider_user_id'),
+        Index('idx_oauth_user_provider', 'user_id', 'provider'),
     )
