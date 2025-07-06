@@ -168,9 +168,9 @@ class RateLimitConfig:
         
         # Endpoint-specific limits
         self.endpoint_limits = {
-            '/api/v1/auth/login': {'limit': 5, 'window': 300},  # 5 login attempts per 5 minutes
-            '/api/v1/auth/register': {'limit': 3, 'window': 3600},  # 3 registrations per hour
-            '/api/v1/auth/reset-password': {'limit': 3, 'window': 3600},  # 3 password resets per hour
+            '/api/v1/auth/login': {'limit': 10, 'window': 300},  # 10 login attempts per 5 minutes
+            '/api/v1/auth/register': {'limit': 50, 'window': 3600},  # 50 registrations per hour (increased for testing)
+            '/api/v1/auth/reset-password': {'limit': 10, 'window': 3600},  # 10 password resets per hour
             '/api/v1/automotive/search': {'limit': 100, 'window': 60},  # 100 searches per minute
             '/api/v1/email/test': {'limit': 5, 'window': 300},  # 5 test emails per 5 minutes
             '/api/v1/analytics/export': {'limit': 10, 'window': 3600},  # 10 exports per hour

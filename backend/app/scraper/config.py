@@ -12,9 +12,9 @@ import os
 class ScraperSettings(BaseSettings):
     """Configuration settings for the web scraper"""
     
-    # Target Website Configuration
-    BASE_URL: str = "https://gruppoautouno.it"
-    USATO_URL: str = "https://gruppoautouno.it/usato"
+    # Target Website Configuration - AutoScout24 (European car marketplace)
+    BASE_URL: str = "https://www.autoscout24.com"
+    CARS_URL: str = "https://www.autoscout24.com/lst"
     
     # Request Configuration
     REQUEST_DELAY: float = 2.0  # Seconds between requests

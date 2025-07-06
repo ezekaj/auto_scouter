@@ -7,7 +7,7 @@ with the specific interface requested for the auto scouter application.
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, desc
+from sqlalchemy import and_, desc, or_
 from typing import List, Optional
 from datetime import datetime, timedelta
 import math
@@ -111,6 +111,7 @@ def get_new_cars(
     """
     try:
         # Calculate cutoff time
+        from datetime import datetime, timedelta
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         
         # Build query with filters including time filter
@@ -180,6 +181,29 @@ def get_new_cars(
         )
 
 
+@router.get("/saved", response_model=dict)
+def get_saved_cars(
+    limit: int = Query(50, ge=1, le=100, description="Number of results to return"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+    db: Session = Depends(get_db)
+):
+    """Get saved vehicles for the current user"""
+    # For now, return empty list since we don't have user authentication
+    # This can be implemented when user system is added
+    return {
+        "vehicles": [],
+        "pagination": {
+            "total_count": 0,
+            "total_pages": 0,
+            "current_page": 1,
+            "limit": limit,
+            "offset": offset,
+            "has_next": False,
+            "has_previous": False
+        }
+    }
+
+
 @router.get("/{car_id}", response_model=VehicleListingSchema)
 def get_car_details(car_id: int, db: Session = Depends(get_db)):
     """Get detailed information about a specific car"""
@@ -187,14 +211,159 @@ def get_car_details(car_id: int, db: Session = Depends(get_db)):
         VehicleListing.id == car_id,
         VehicleListing.is_active == True
     ).first()
-    
+
     if not car:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Car not found"
         )
-    
+
     return car
+
+
+@router.get("/{car_id}/similar", response_model=dict)
+def get_similar_cars(
+    car_id: int,
+    limit: int = Query(5, ge=1, le=20, description="Number of similar cars to return"),
+    db: Session = Depends(get_db)
+):
+    """Get cars similar to the specified car"""
+    try:
+        # Get the reference car
+        reference_car = db.query(VehicleListing).filter(
+            VehicleListing.id == car_id,
+            VehicleListing.is_active == True
+        ).first()
+
+        if not reference_car:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Reference car not found"
+            )
+
+        # Find similar cars based on make, model, and price range
+        price_range = 0.2  # 20% price range
+        min_price = reference_car.price * (1 - price_range) if reference_car.price else 0
+        max_price = reference_car.price * (1 + price_range) if reference_car.price else float('inf')
+
+        similar_cars = db.query(VehicleListing).filter(
+            and_(
+                VehicleListing.id != car_id,
+                VehicleListing.is_active == True,
+                VehicleListing.make == reference_car.make,
+                or_(
+                    VehicleListing.model == reference_car.model,
+                    VehicleListing.price.between(min_price, max_price)
+                )
+            )
+        ).limit(limit).all()
+
+        return {
+            "vehicles": similar_cars,
+            "reference_car_id": car_id,
+            "total_found": len(similar_cars)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error finding similar cars: {str(e)}"
+        )
+
+
+@router.post("/{car_id}/save")
+def save_car(car_id: int, db: Session = Depends(get_db)):
+    """Save a car to user's favorites"""
+    # Placeholder for save functionality
+    # This would require user authentication and a saved_cars table
+    return {"message": "Car saved successfully", "car_id": car_id}
+
+
+@router.delete("/{car_id}/save")
+def unsave_car(car_id: int, db: Session = Depends(get_db)):
+    """Remove a car from user's favorites"""
+    # Placeholder for unsave functionality
+    return {"message": "Car removed from favorites", "car_id": car_id}
+
+
+@router.post("/{car_id}/report")
+def report_car(
+    car_id: int,
+    report_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Report a car listing for issues"""
+    # Placeholder for report functionality
+    return {"message": "Car reported successfully", "car_id": car_id}
+
+
+@router.get("/recommendations", response_model=dict)
+def get_recommendations(
+    limit: int = Query(10, ge=1, le=50, description="Number of recommendations"),
+    db: Session = Depends(get_db)
+):
+    """Get car recommendations for the user"""
+    try:
+        # For now, return recent popular cars as recommendations
+        cars = db.query(VehicleListing).filter(
+            VehicleListing.is_active == True
+        ).order_by(desc(VehicleListing.scraped_at)).limit(limit).all()
+
+        return {
+            "vehicles": cars,
+            "total_found": len(cars),
+            "recommendation_type": "recent_popular"
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting recommendations: {str(e)}"
+        )
+
+
+@router.get("/filter-options", response_model=dict)
+def get_filter_options(db: Session = Depends(get_db)):
+    """Get available filter options for car search"""
+    try:
+        # Get unique makes
+        makes = db.query(VehicleListing.make).filter(
+            and_(
+                VehicleListing.is_active == True,
+                VehicleListing.make.isnot(None)
+            )
+        ).distinct().order_by(VehicleListing.make).all()
+
+        # Get unique fuel types
+        fuel_types = db.query(VehicleListing.fuel_type).filter(
+            and_(
+                VehicleListing.is_active == True,
+                VehicleListing.fuel_type.isnot(None)
+            )
+        ).distinct().order_by(VehicleListing.fuel_type).all()
+
+        # Get unique transmissions
+        transmissions = db.query(VehicleListing.transmission).filter(
+            and_(
+                VehicleListing.is_active == True,
+                VehicleListing.transmission.isnot(None)
+            )
+        ).distinct().order_by(VehicleListing.transmission).all()
+
+        return {
+            "makes": [make[0] for make in makes if make[0]],
+            "fuelTypes": [fuel[0] for fuel in fuel_types if fuel[0]],
+            "transmissions": [trans[0] for trans in transmissions if trans[0]],
+            "bodyTypes": ["Sedan", "SUV", "Hatchback", "Coupe", "Wagon", "Convertible"]
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting filter options: {str(e)}"
+        )
 
 
 @router.get("/stats/summary", response_model=dict)

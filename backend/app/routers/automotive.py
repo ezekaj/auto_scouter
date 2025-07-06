@@ -6,8 +6,10 @@ This module provides REST API endpoints for accessing scraped automotive data.
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, desc, func
 from typing import List, Optional, Dict, Any
 import math
+import logging
 
 from app.models.base import get_db
 from app.services.automotive_service import AutomotiveService
@@ -22,8 +24,55 @@ from app.scraper.compliance import compliance_manager
 from app.scraper.multi_source_scraper import multi_source_scraper
 from app.tasks.scraping_tasks import scrape_all_sources_task
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
+@router.get("/vehicles/simple")
+def get_vehicles_simple(
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of records to return"),
+    db: Session = Depends(get_db)
+):
+    """Get vehicles without enum validation for frontend testing"""
+    try:
+        from app.models.automotive import VehicleListing as VehicleModel
+
+        vehicles = db.query(VehicleModel).filter(
+            VehicleModel.is_active == True
+        ).limit(limit).all()
+
+        # Convert to simple dict format
+        result = []
+        for vehicle in vehicles:
+            result.append({
+                "id": vehicle.id,
+                "make": vehicle.make,
+                "model": vehicle.model,
+                "year": vehicle.year,
+                "price": vehicle.price,
+                "currency": vehicle.currency,
+                "mileage": vehicle.mileage,
+                "fuel_type": vehicle.fuel_type,
+                "city": vehicle.city,
+                "country": vehicle.country,
+                "source_website": vehicle.source_website,
+                "listing_url": vehicle.listing_url,
+                "primary_image_url": vehicle.primary_image_url,
+                "scraped_at": vehicle.scraped_at.isoformat() if vehicle.scraped_at else None
+            })
+
+        return {
+            "vehicles": result,
+            "total": len(result),
+            "message": "Vehicles retrieved successfully"
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting vehicles: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving vehicles: {str(e)}"
+        )
 
 @router.get("/vehicles", response_model=VehicleSearchResponse)
 def search_vehicles(
@@ -98,6 +147,97 @@ def get_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
         )
     
     return vehicle
+
+
+@router.get("/new-cars", response_model=List[Dict[str, Any]])
+def get_new_cars(
+    limit: int = Query(20, ge=1, le=100, description="Number of results to return"),
+    hours: int = Query(48, ge=1, le=168, description="Hours to look back for new cars"),
+    db: Session = Depends(get_db)
+):
+    """Get recently added vehicles (alias for /cars/new endpoint)"""
+    try:
+        from datetime import datetime, timedelta
+        from app.models.automotive import VehicleListing
+
+        # Calculate cutoff time
+        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+
+        # Get recent vehicles
+        vehicles = db.query(VehicleListing).filter(
+            and_(
+                VehicleListing.is_active == True,
+                VehicleListing.scraped_at >= cutoff_time
+            )
+        ).order_by(desc(VehicleListing.scraped_at)).limit(limit).all()
+
+        # Convert SQLAlchemy objects to dictionaries, excluding internal attributes
+        result = []
+        for vehicle in vehicles:
+            vehicle_dict = {key: value for key, value in vehicle.__dict__.items()
+                          if not key.startswith('_')}
+            result.append(vehicle_dict)
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting new cars: {str(e)}"
+        )
+
+
+@router.get("/makes", response_model=List[str])
+def get_makes(db: Session = Depends(get_db)):
+    """Get list of available car makes"""
+    try:
+        from app.models.automotive import VehicleListing
+
+        makes = db.query(VehicleListing.make).filter(
+            and_(
+                VehicleListing.is_active == True,
+                VehicleListing.make.isnot(None),
+                VehicleListing.make != ""
+            )
+        ).distinct().order_by(VehicleListing.make).all()
+
+        return [make[0] for make in makes if make[0]]
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting makes: {str(e)}"
+        )
+
+
+@router.get("/models", response_model=List[str])
+def get_models(
+    make: Optional[str] = Query(None, description="Filter models by make"),
+    db: Session = Depends(get_db)
+):
+    """Get list of available car models, optionally filtered by make"""
+    try:
+        from app.models.automotive import VehicleListing
+
+        query = db.query(VehicleListing.model).filter(
+            and_(
+                VehicleListing.is_active == True,
+                VehicleListing.model.isnot(None),
+                VehicleListing.model != ""
+            )
+        )
+
+        if make:
+            query = query.filter(VehicleListing.make.ilike(f"%{make}%"))
+
+        models = query.distinct().order_by(VehicleListing.model).all()
+
+        return [model[0] for model in models if model[0]]
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting models: {str(e)}"
+        )
 
 
 @router.get("/analytics", response_model=Dict[str, Any])

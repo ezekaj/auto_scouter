@@ -78,7 +78,7 @@ class Notification(Base):
     # Relationships
     user = relationship("User", back_populates="notifications")
     alert = relationship("Alert", back_populates="notifications")
-    listing = relationship("VehicleListing", back_populates="notifications")
+    listing = relationship("VehicleListing")
 
     # Indexes for performance
     __table_args__ = (

@@ -90,7 +90,6 @@ class VehicleListing(Base):
     images = relationship("VehicleImage", back_populates="vehicle", cascade="all, delete-orphan")
     price_history = relationship("PriceHistory", back_populates="vehicle", cascade="all, delete-orphan")
     scraping_logs = relationship("ScrapingLog", back_populates="vehicle")
-    notifications = relationship("Notification", back_populates="listing")
 
     # Self-referential relationship for duplicates
     duplicates = relationship("VehicleListing", remote_side=[id], backref="master_record")

@@ -12,9 +12,7 @@ from typing import List, Dict, Any, Optional, Type
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 
-from app.scraper.automotive_scraper import GruppoAutoUnoScraper
 from app.scraper.autoscout24_scraper import AutoScout24Scraper
-from app.scraper.mobile_de_scraper import MobileDeScraper
 from app.scraper.base import BaseScraper
 from app.scraper.config import scraper_settings
 from app.scraper.monitoring import scraper_monitor
@@ -41,9 +39,7 @@ class MultiSourceScraper:
     
     def __init__(self):
         self.scrapers = {
-            'gruppoautouno': GruppoAutoUnoScraper,
-            'autoscout24': AutoScout24Scraper,
-            'mobile_de': MobileDeScraper
+            'autoscout24': AutoScout24Scraper
         }
         
         self.enabled_sources = self._get_enabled_sources()

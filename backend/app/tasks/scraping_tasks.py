@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.celery_app import celery_app
 from app.models.base import SessionLocal
 from app.models.automotive import VehicleListing, ScrapingSession, ScrapingLog
-from app.scraper.automotive_scraper import GruppoAutoUnoScraper
+from app.scraper.autoscout24_scraper import AutoScout24Scraper
 from app.scraper.multi_source_scraper import multi_source_scraper
 from app.services.automotive_service import AutomotiveService
 
@@ -190,7 +190,7 @@ def scrape_all_sources(self):
         session = automotive_service.create_scraping_session(session_data)
         
         # Initialize scraper
-        scraper = GruppoAutoUnoScraper()
+        scraper = AutoScout24Scraper()
         
         # Track statistics
         stats = {
@@ -311,8 +311,8 @@ def scrape_single_source(source_name: str, max_vehicles: int = 50):
     
     db = SessionLocal()
     try:
-        if source_name.lower() == 'gruppoautouno':
-            scraper = GruppoAutoUnoScraper()
+        if source_name.lower() == 'autoscout24':
+            scraper = AutoScout24Scraper()
             vehicles = scraper.scrape_all_listings(max_vehicles=max_vehicles)
             
             new_count = 0

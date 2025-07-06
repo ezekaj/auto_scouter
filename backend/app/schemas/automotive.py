@@ -12,14 +12,14 @@ from enum import Enum
 
 
 class FuelType(str, Enum):
-    GASOLINE = "gasoline"
-    DIESEL = "diesel"
-    ELECTRIC = "electric"
-    HYBRID = "hybrid"
-    PLUG_IN_HYBRID = "plug_in_hybrid"
-    LPG = "lpg"
-    CNG = "cng"
-    HYDROGEN = "hydrogen"
+    GASOLINE = "Gasoline"
+    DIESEL = "Diesel"
+    ELECTRIC = "Electric"
+    HYBRID = "Hybrid"
+    PLUG_IN_HYBRID = "Plug-in Hybrid"
+    LPG = "LPG"
+    CNG = "CNG"
+    HYDROGEN = "Hydrogen"
 
 
 class TransmissionType(str, Enum):

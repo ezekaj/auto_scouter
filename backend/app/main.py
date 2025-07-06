@@ -5,6 +5,7 @@ from app.routers import scouts, teams, matches, automotive, auth, cars, admin
 from app.routers import enhanced_notifications, enhanced_alerts, webhooks, realtime, monitoring, dashboard, search, api_docs, email, comparison, price_tracking, analytics, rate_limiting, logging, i18n, oauth
 from app.core.config import settings
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
+from app.background_scraper import start_background_scraper, get_scraper_status
 from app.services.health_check import health_service
 from app.middleware.rate_limiting import RateLimitMiddleware, RateLimitService
 from app.core.logging_config import setup_logging
@@ -152,6 +153,12 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": settings.VERSION
     }
+
+
+@app.get("/scraper-status")
+def scraper_status():
+    """Get background scraper status"""
+    return get_scraper_status()
 
 
 @app.get("/health/detailed")

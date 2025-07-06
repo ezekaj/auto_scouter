@@ -5,7 +5,16 @@ const config: CapacitorConfig = {
   appName: 'Vehicle Scout',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    // Allow cleartext traffic for development
+    cleartext: true,
+    // Configure allowed navigation
+    allowNavigation: [
+      'https://vehiclescout.app',
+      'https://vehicle-scout-backend.railway.app',
+      'http://localhost:8000',
+      'http://127.0.0.1:8000'
+    ]
   },
   plugins: {
     SplashScreen: {
@@ -31,6 +40,20 @@ const config: CapacitorConfig = {
     },
     App: {
       launchUrl: 'https://vehiclescout.app'
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert']
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon_config_sample',
+      iconColor: '#488AFF',
+      sound: 'beep.wav'
+    },
+    Camera: {
+      permissions: ['camera', 'photos']
+    },
+    Geolocation: {
+      permissions: ['location']
     }
   }
 };

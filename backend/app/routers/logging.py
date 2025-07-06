@@ -5,7 +5,7 @@ This module provides API endpoints for logging management and monitoring.
 """
 
 import os
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
@@ -284,7 +284,7 @@ async def test_logging(
 
 @router.get("/tail/{log_type}")
 async def tail_log(
-    log_type: str = Field(..., pattern="^(app|error|security|performance)$"),
+    log_type: str = Path(..., pattern="^(app|error|security|performance)$"),
     lines: int = Query(50, ge=1, le=1000),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
