@@ -24,13 +24,9 @@ apscheduler==3.10.4
 celery==5.3.4
 redis==5.0.1
 
-# Data Processing
-pandas>=2.0.0
-numpy>=1.24.0
-
-# Logging and Monitoring
-structlog==23.2.0
-prometheus-client==0.19.0
+# Cloud Deployment Dependencies
+gunicorn==21.2.0
+firebase-admin==6.2.0
 psutil==5.9.6
 
 # Testing

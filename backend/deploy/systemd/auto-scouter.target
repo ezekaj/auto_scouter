@@ -1,9 +1,0 @@
-[Unit]
-Description=Auto Scouter Application Suite
-Documentation=https://github.com/your-org/auto-scouter
-Wants=auto-scouter-api.service auto-scouter-worker.service auto-scouter-beat.service
-After=auto-scouter-api.service auto-scouter-worker.service auto-scouter-beat.service
-AllowIsolate=yes
-
-[Install]
-WantedBy=multi-user.target

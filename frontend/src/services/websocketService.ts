@@ -55,11 +55,11 @@ class WebSocketService {
       this.isConnecting = true
 
       try {
-        console.log('Connecting to WebSocket:', config.wsBaseUrl)
+        // Connecting to WebSocket
         this.ws = new WebSocket(config.wsBaseUrl)
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected')
+          // WebSocket connected
           this.isConnecting = false
           this.reconnectAttempts = 0
           this.emit('connected', null)
@@ -76,7 +76,7 @@ class WebSocketService {
         }
 
         this.ws.onclose = (event) => {
-          console.log('WebSocket disconnected:', event.code, event.reason)
+          // WebSocket disconnected
           this.isConnecting = false
           this.ws = null
           this.emit('disconnected', { code: event.code, reason: event.reason })
@@ -113,7 +113,7 @@ class WebSocketService {
     this.reconnectAttempts++
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
     
-    console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`)
+    // Scheduling reconnect attempt
     
     setTimeout(() => {
       if (this.shouldReconnect) {
@@ -125,7 +125,7 @@ class WebSocketService {
   }
 
   private handleMessage(message: WebSocketMessage) {
-    console.log('WebSocket message received:', message.type)
+    // WebSocket message received
     
     switch (message.type) {
       case 'new_notification':
@@ -277,6 +277,6 @@ export const websocketService = new WebSocketService()
 // Request notification permission on load
 if ('Notification' in window && Notification.permission === 'default') {
   Notification.requestPermission().then(permission => {
-    console.log('Notification permission:', permission)
+    // Notification permission handled
   })
 }
