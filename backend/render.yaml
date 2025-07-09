@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: auto-scouter-backend
+    env: python
+    runtime: python-3.11
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main_cloud:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SCRAPING_INTERVAL_MINUTES
+        value: "30"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: auto-scouter-db
+          property: connectionString
+
+databases:
+  - name: auto-scouter-db
+    databaseName: auto_scouter
+    user: auto_scouter_user
+    plan: free
