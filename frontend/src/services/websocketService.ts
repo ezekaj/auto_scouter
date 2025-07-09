@@ -276,7 +276,7 @@ export const websocketService = new WebSocketService()
 
 // Request notification permission on load
 if ('Notification' in window && Notification.permission === 'default') {
-  Notification.requestPermission().then(permission => {
+  Notification.requestPermission().then(_permission => {
     // Notification permission handled
   })
 }

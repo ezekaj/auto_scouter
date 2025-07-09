@@ -7,10 +7,10 @@ import './index.css'
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
+      .then((_registration) => {
         // Service worker registered successfully
       })
-      .catch((registrationError) => {
+      .catch((_registrationError) => {
         // Service worker registration failed
       });
   });

@@ -16,7 +16,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 // Lazy load components for better performance
 const Dashboard = React.lazy(() => import('@/components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
 const EnhancedDashboard = React.lazy(() => import('@/components/dashboard/EnhancedDashboard'))
-const ApiTest = React.lazy(() => import('@/components/ApiTest'))
+
 const VehicleSearch = React.lazy(() => import('@/components/vehicles/VehicleSearch').then(m => ({ default: m.VehicleSearch })))
 const VehicleDetail = React.lazy(() => import('@/components/vehicles/VehicleDetail').then(m => ({ default: m.VehicleDetail })))
 const AlertManager = React.lazy(() => import('@/components/alerts/AlertManager').then(m => ({ default: m.AlertManager })))
@@ -125,13 +125,7 @@ function App() {
                   </Layout>
                 </ProtectedRoute>
               } />
-              <Route path="/api-test" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ApiTest />
-                  </Layout>
-                </ProtectedRoute>
-              } />
+
               <Route path="/search" element={
                 <ProtectedRoute>
                   <Layout>
