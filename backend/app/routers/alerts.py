@@ -9,9 +9,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.models.base import get_db
-from app.models.scout import User, Alert
+from app.models.scout import Alert
 from app.schemas.alerts import AlertCreate, AlertUpdate, AlertResponse
-from app.core.auth import get_current_active_user
 
 router = APIRouter()
 
@@ -19,7 +18,6 @@ router = APIRouter()
 @router.post("/", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
 def create_alert(
     alert_data: AlertCreate,
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Create a new price/availability alert"""
@@ -52,31 +50,29 @@ def create_alert(
                 detail="Minimum year must be less than maximum year"
             )
 
-    # Create alert
+    # Create alert (no user_id needed for single-user mode)
     db_alert = Alert(
-        user_id=current_user.id,
         **alert_data.dict(exclude_unset=True)
     )
-    
+
     db.add(db_alert)
     db.commit()
     db.refresh(db_alert)
-    
+
     return db_alert
 
 
 @router.get("/", response_model=List[AlertResponse])
-def get_user_alerts(
-    current_user: User = Depends(get_current_active_user),
+def get_alerts(
     db: Session = Depends(get_db),
     active_only: bool = Query(True, description="Return only active alerts")
 ):
-    """Get all alerts for the current user"""
-    query = db.query(Alert).filter(Alert.user_id == current_user.id)
-    
+    """Get all alerts (single-user mode)"""
+    query = db.query(Alert)
+
     if active_only:
         query = query.filter(Alert.is_active == True)
-    
+
     alerts = query.order_by(Alert.created_at.desc()).all()
     return alerts
 
@@ -84,21 +80,17 @@ def get_user_alerts(
 @router.get("/{alert_id}", response_model=AlertResponse)
 def get_alert(
     alert_id: int,
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Get a specific alert by ID"""
-    alert = db.query(Alert).filter(
-        Alert.id == alert_id,
-        Alert.user_id == current_user.id
-    ).first()
-    
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+
     if not alert:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Alert not found"
         )
-    
+
     return alert
 
 
@@ -106,104 +98,88 @@ def get_alert(
 def update_alert(
     alert_id: int,
     alert_update: AlertUpdate,
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Update a specific alert"""
-    alert = db.query(Alert).filter(
-        Alert.id == alert_id,
-        Alert.user_id == current_user.id
-    ).first()
-    
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+
     if not alert:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Alert not found"
         )
-    
+
     update_data = alert_update.dict(exclude_unset=True)
-    
+
     # Validate price range if both are being updated
     min_price = update_data.get("min_price", alert.min_price)
     max_price = update_data.get("max_price", alert.max_price)
-    
+
     if min_price is not None and max_price is not None and min_price >= max_price:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Minimum price must be less than maximum price"
         )
-    
+
     # Update alert
     for field, value in update_data.items():
         setattr(alert, field, value)
-    
+
     db.commit()
     db.refresh(alert)
-    
+
     return alert
 
 
 @router.delete("/{alert_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_alert(
     alert_id: int,
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Delete a specific alert"""
-    alert = db.query(Alert).filter(
-        Alert.id == alert_id,
-        Alert.user_id == current_user.id
-    ).first()
-    
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+
     if not alert:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Alert not found"
         )
-    
+
     db.delete(alert)
     db.commit()
-    
+
     return None
 
 
 @router.post("/{alert_id}/toggle", response_model=AlertResponse)
 def toggle_alert_status(
     alert_id: int,
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Toggle alert active/inactive status"""
-    alert = db.query(Alert).filter(
-        Alert.id == alert_id,
-        Alert.user_id == current_user.id
-    ).first()
-    
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+
     if not alert:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Alert not found"
         )
-    
+
     alert.is_active = not alert.is_active
     db.commit()
     db.refresh(alert)
-    
+
     return alert
 
 
 @router.get("/stats/summary", response_model=dict)
 def get_alert_stats(
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get alert statistics for the current user"""
-    total_alerts = db.query(Alert).filter(Alert.user_id == current_user.id).count()
-    active_alerts = db.query(Alert).filter(
-        Alert.user_id == current_user.id,
-        Alert.is_active == True
-    ).count()
-    
+    """Get alert statistics (single-user mode)"""
+    total_alerts = db.query(Alert).count()
+    active_alerts = db.query(Alert).filter(Alert.is_active == True).count()
+
     return {
         "total_alerts": total_alerts,
         "active_alerts": active_alerts,

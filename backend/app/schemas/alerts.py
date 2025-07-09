@@ -95,9 +95,8 @@ class AlertUpdate(BaseModel):
 
 
 class AlertResponse(BaseModel):
-    """Response schema for alert data"""
+    """Response schema for alert data (single-user mode)"""
     id: int
-    user_id: int
     name: str
     description: Optional[str] = None
     

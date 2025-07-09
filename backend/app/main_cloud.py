@@ -20,7 +20,7 @@ from app.core.cloud_config import (
 )
 
 # Core imports
-from app.routers import auth, automotive, alerts, notifications
+from app.routers import automotive, alerts, notifications
 from app.models.base import engine, Base
 from app.background_scraper import BackgroundScraper
 
@@ -187,8 +187,7 @@ async def trigger_scraping():
         logger.error(f"Manual scraping trigger failed: {e}")
         raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
 
-# Include API routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
+# Include API routers (simplified for single-user mode)
 app.include_router(automotive.router, prefix="/api/v1/automotive", tags=["vehicles"])
 app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])

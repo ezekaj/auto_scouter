@@ -2,13 +2,13 @@
 # Import all models to ensure proper SQLAlchemy relationship resolution
 
 from .base import Base, get_db, engine, SessionLocal
-from .scout import User, Scout, Team, Match, ScoutReport, Alert, OAuthAccount
+from .scout import Scout, Team, Match, ScoutReport, Alert
 from .automotive import (
     VehicleListing, VehicleImage, PriceHistory,
     ScrapingLog, ScrapingSession, DataQualityMetric, MultiSourceSession
 )
 from .notifications import (
-    Notification, NotificationPreferences, NotificationTemplate,
+    Notification, NotificationTemplate,
     NotificationQueue, AlertMatchLog
 )
 from .comparison import (
@@ -18,10 +18,10 @@ from .comparison import (
 
 __all__ = [
     'Base', 'get_db', 'engine', 'SessionLocal',
-    'User', 'Scout', 'Team', 'Match', 'ScoutReport', 'Alert', 'OAuthAccount',
+    'Scout', 'Team', 'Match', 'ScoutReport', 'Alert',
     'VehicleListing', 'VehicleImage', 'PriceHistory',
     'ScrapingLog', 'ScrapingSession', 'DataQualityMetric', 'MultiSourceSession',
-    'Notification', 'NotificationPreferences', 'NotificationTemplate',
+    'Notification', 'NotificationTemplate',
     'NotificationQueue', 'AlertMatchLog',
     'VehicleComparison', 'VehicleComparisonItem', 'ComparisonTemplate',
     'ComparisonShare', 'ComparisonView'

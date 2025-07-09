@@ -18,11 +18,7 @@ from app.schemas.automotive import (
     VehicleSearchFilters, VehicleSearchResponse, VehicleAnalytics,
     ScrapingSession, ScrapingLog
 )
-from app.scraper.scheduler import scraper_scheduler
-from app.scraper.monitoring import scraper_monitor
-from app.scraper.compliance import compliance_manager
-from app.scraper.multi_source_scraper import multi_source_scraper
-from app.tasks.scraping_tasks import scrape_all_sources_task
+# Scraper imports removed for simplified single-user deployment
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -249,8 +245,8 @@ def get_analytics(db: Session = Depends(get_db)):
         # Get data quality metrics
         quality_metrics = automotive_service.get_data_quality_metrics()
 
-        # Get monitoring data overview
-        data_overview = scraper_monitor.get_data_overview(db)
+        # Get monitoring data overview (disabled for single-user mode)
+        data_overview = {"status": "disabled"}
 
         # Multi-source analytics
         from app.models.automotive import MultiSourceSession

@@ -35,13 +35,12 @@ class NotificationFrequency(str, Enum):
 
 
 class Notification(Base):
-    """Notification model for storing sent notifications"""
+    """Notification model for storing sent notifications (single-user mode)"""
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Relationships
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+
+    # Relationships (removed user_id for single-user mode)
     alert_id = Column(Integer, ForeignKey("alerts.id"), nullable=True, index=True)
     listing_id = Column(Integer, ForeignKey("vehicle_listings.id"), nullable=True, index=True)
     
@@ -75,57 +74,20 @@ class Notification(Base):
     priority = Column(Integer, default=1)  # 1=low, 2=medium, 3=high
     is_read = Column(Boolean, default=False, index=True)
     
-    # Relationships
-    user = relationship("User", back_populates="notifications")
+    # Relationships (simplified for single-user mode)
     alert = relationship("Alert", back_populates="notifications")
     listing = relationship("VehicleListing")
 
-    # Indexes for performance
+    # Indexes for performance (removed user-based indexes)
     __table_args__ = (
-        Index('idx_user_notifications', 'user_id', 'created_at'),
+        Index('idx_notifications_created', 'created_at'),
         Index('idx_alert_notifications', 'alert_id', 'sent_at'),
         Index('idx_notification_status', 'status', 'created_at'),
         Index('idx_notification_type_status', 'notification_type', 'status'),
     )
 
 
-class NotificationPreferences(Base):
-    """User notification preferences"""
-    __tablename__ = "notification_preferences"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
-    
-    # Channel preferences
-    email_enabled = Column(Boolean, default=True)
-    in_app_enabled = Column(Boolean, default=True)
-    push_enabled = Column(Boolean, default=False)
-    sms_enabled = Column(Boolean, default=False)
-    
-    # Frequency settings
-    email_frequency = Column(String(20), default=NotificationFrequency.IMMEDIATE)
-    push_frequency = Column(String(20), default=NotificationFrequency.IMMEDIATE)
-    
-    # Rate limiting
-    max_notifications_per_day = Column(Integer, default=10)
-    max_notifications_per_alert_per_day = Column(Integer, default=5)
-    
-    # Quiet hours (24-hour format)
-    quiet_hours_start = Column(String(5), default="22:00")  # Format: "HH:MM"
-    quiet_hours_end = Column(String(5), default="08:00")
-    quiet_hours_enabled = Column(Boolean, default=False)
-    
-    # Content preferences
-    include_images = Column(Boolean, default=True)
-    include_full_details = Column(Boolean, default=True)
-    language = Column(String(5), default="en")
-    
-    # Metadata
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    user = relationship("User", back_populates="notification_preferences")
+# NotificationPreferences model removed for single-user mode simplification
 
 
 class NotificationTemplate(Base):

@@ -11,35 +11,31 @@ from app.models.base import Base
 
 
 class VehicleComparison(Base):
-    """Model for storing vehicle comparisons"""
+    """Model for storing vehicle comparisons (single-user mode)"""
     __tablename__ = "vehicle_comparisons"
 
     id = Column(Integer, primary_key=True, index=True)
-    
-    # User who created the comparison
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    
+
     # Comparison details
     name = Column(String(200), nullable=False)  # User-defined name for the comparison
     description = Column(Text, nullable=True)
-    
+
     # Comparison settings
     comparison_criteria = Column(JSON, default=list)  # List of fields to compare
     is_public = Column(Boolean, default=False)  # Whether comparison can be shared
     is_favorite = Column(Boolean, default=False)
-    
+
     # Metadata
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_accessed = Column(DateTime(timezone=True), nullable=True)
-    
-    # Relationships
-    user = relationship("User", back_populates="vehicle_comparisons")
+
+    # Relationships (simplified for single-user mode)
     comparison_items = relationship("VehicleComparisonItem", back_populates="comparison", cascade="all, delete-orphan")
-    
-    # Indexes
+
+    # Indexes (removed user-based indexes)
     __table_args__ = (
-        Index('idx_user_comparisons', 'user_id', 'created_at'),
+        Index('idx_comparisons_created', 'created_at'),
         Index('idx_public_comparisons', 'is_public', 'created_at'),
     )
 

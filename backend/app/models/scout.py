@@ -4,24 +4,7 @@ from sqlalchemy.sql import func
 from app.models.base import Base
 
 
-class User(Base):
-    """User model for authentication and alert management"""
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True, nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    # Relationships
-    alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
-    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
-    notification_preferences = relationship("NotificationPreferences", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    vehicle_comparisons = relationship("VehicleComparison", back_populates="user", cascade="all, delete-orphan")
+# User model removed for single-user mode simplification
 
 
 class Scout(Base):
@@ -107,11 +90,10 @@ class ScoutReport(Base):
 
 
 class Alert(Base):
-    """Enhanced Alert model for comprehensive vehicle notifications"""
+    """Enhanced Alert model for comprehensive vehicle notifications (single-user mode)"""
     __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # Alert identification
     name = Column(String(200), nullable=False)  # User-friendly name for the alert
@@ -150,47 +132,16 @@ class Alert(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Relationships
-    user = relationship("User", back_populates="alerts")
+    # Relationships (simplified for single-user mode)
     notifications = relationship("Notification", back_populates="alert", cascade="all, delete-orphan")
 
-    # Indexes for performance
+    # Indexes for performance (removed user-based indexes)
     __table_args__ = (
-        Index('idx_alert_user_active', 'user_id', 'is_active'),
+        Index('idx_alert_active', 'is_active'),
         Index('idx_alert_criteria', 'make', 'model', 'min_price', 'max_price'),
         Index('idx_alert_location', 'city', 'region'),
         Index('idx_alert_frequency', 'notification_frequency', 'last_triggered'),
     )
 
 
-class OAuthAccount(Base):
-    """OAuth account model for social login integration"""
-    __tablename__ = "oauth_accounts"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-
-    # OAuth provider information
-    provider = Column(String(50), nullable=False, index=True)  # google, facebook, github
-    provider_user_id = Column(String(255), nullable=False, index=True)  # User ID from provider
-
-    # OAuth tokens
-    access_token = Column(Text, nullable=True)  # OAuth access token
-    refresh_token = Column(Text, nullable=True)  # OAuth refresh token
-    token_expires_at = Column(DateTime(timezone=True), nullable=True)  # Token expiry
-
-    # User data from provider
-    user_data = Column(JSON, nullable=True)  # Raw user data from OAuth provider
-
-    # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    # Relationships
-    user = relationship("User", backref="oauth_accounts")
-
-    # Indexes for performance
-    __table_args__ = (
-        Index('idx_oauth_provider_user', 'provider', 'provider_user_id'),
-        Index('idx_oauth_user_provider', 'user_id', 'provider'),
-    )
+# OAuthAccount model removed for single-user mode simplification

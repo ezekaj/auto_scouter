@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 import math
 
 from app.models.base import get_db
-from app.models.scout import User
 from app.models.notifications import (
     Notification, NotificationPreferences, NotificationTemplate,
     NotificationStatus, NotificationType
@@ -22,13 +21,12 @@ from app.schemas.notifications import (
     NotificationPreferencesResponse, NotificationPreferencesUpdate,
     NotificationStats, UserNotificationStats, NotificationUpdate
 )
-from app.core.auth import get_current_active_user
 
 router = APIRouter()
 
 
 @router.get("/", response_model=NotificationHistoryResponse)
-def get_user_notifications(
+def get_notifications(
     notification_type: Optional[NotificationType] = Query(None, description="Filter by notification type"),
     status: Optional[NotificationStatus] = Query(None, description="Filter by status"),
     is_read: Optional[bool] = Query(None, description="Filter by read status"),
@@ -36,46 +34,42 @@ def get_user_notifications(
     date_to: Optional[datetime] = Query(None, description="Filter to date"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get user's notification history with filtering and pagination"""
+    """Get notification history with filtering and pagination (single-user mode)"""
     try:
-        # Build query
-        query = db.query(Notification).filter(Notification.user_id == current_user.id)
-        
+        # Build query (no user filtering needed in single-user mode)
+        query = db.query(Notification)
+
         # Apply filters
         if notification_type:
             query = query.filter(Notification.notification_type == notification_type)
-        
+
         if status:
             query = query.filter(Notification.status == status)
-        
+
         if is_read is not None:
             query = query.filter(Notification.is_read == is_read)
-        
+
         if date_from:
             query = query.filter(Notification.created_at >= date_from)
-        
+
         if date_to:
             query = query.filter(Notification.created_at <= date_to)
-        
+
         # Get total count
         total_count = query.count()
-        
+
         # Get unread count
-        unread_count = db.query(Notification).filter(
-            Notification.user_id == current_user.id,
-            Notification.is_read == False
-        ).count()
-        
+        unread_count = db.query(Notification).filter(Notification.is_read == False).count()
+
         # Apply pagination and ordering
         offset = (page - 1) * page_size
         notifications = query.order_by(desc(Notification.created_at)).offset(offset).limit(page_size).all()
-        
+
         # Calculate pagination info
         total_pages = math.ceil(total_count / page_size) if total_count > 0 else 0
-        
+
         return NotificationHistoryResponse(
             notifications=notifications,
             total_count=total_count,
@@ -84,7 +78,7 @@ def get_user_notifications(
             page_size=page_size,
             total_pages=total_pages
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -95,13 +89,11 @@ def get_user_notifications(
 @router.get("/{notification_id}", response_model=NotificationWithDetails)
 def get_notification_details(
     notification_id: int,
-    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get detailed information about a specific notification"""
+    """Get detailed information about a specific notification (single-user mode)"""
     notification = db.query(Notification).filter(
-        Notification.id == notification_id,
-        Notification.user_id == current_user.id
+        Notification.id == notification_id
     ).first()
     
     if not notification:
