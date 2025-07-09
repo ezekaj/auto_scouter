@@ -1,0 +1,19 @@
+DEPLOYMENT FORCE FILE - Version 2.0.0
+This file is created to force Railway to redeploy the application with updated alert endpoints.
+
+Timestamp: 2025-07-09 (Task completion)
+Features: AutoUno Scraper, Alert System, Database Integration
+API Endpoints: /api/v1/alerts/, /api/v1/automotive/vehicles/simple, /api/v1/scraper/autouno/test
+
+This deployment includes:
+1. Working AutoUno scraper with realistic Albanian vehicle data
+2. Complete alert creation and management system
+3. Database integration with PostgreSQL
+4. API endpoints for mobile app integration
+5. Comprehensive error handling and validation
+
+The mobile app should now be able to:
+- Create alerts via POST /api/v1/alerts/
+- Retrieve alerts via GET /api/v1/alerts/
+- Test alerts via POST /api/v1/alerts/{id}/test
+- Get vehicle listings via GET /api/v1/automotive/vehicles/simple
