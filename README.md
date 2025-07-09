@@ -1,28 +1,155 @@
-# 🚗 Vehicle Scout - Car Scouting Application
+# 🚗 Auto Scouter - Vehicle Listing & Search Platform
 
-**A complete car scouting mobile application that scrapes car listings from AutoUno and other websites, providing real-time notifications for new matches based on user criteria.**
+[![Deployment Status](https://img.shields.io/badge/deployment-live-brightgreen)](https://auto-scouter-backend-production.up.railway.app)
+[![Backend](https://img.shields.io/badge/backend-FastAPI-009688)](https://fastapi.tiangolo.com/)
+[![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Ionic-blue)](https://ionicframework.com/)
+[![Database](https://img.shields.io/badge/database-PostgreSQL-336791)](https://postgresql.org/)
+[![Cloud](https://img.shields.io/badge/cloud-Railway-0B0D0E)](https://railway.app/)
 
-## 🎯 **CURRENT STATUS: FULLY FUNCTIONAL**
+Auto Scouter is a comprehensive vehicle listing and search platform that allows users to discover, search, and get alerts for vehicles from multiple sources. The application features a FastAPI backend deployed on Railway cloud platform and a React/Ionic mobile frontend.
 
-✅ **User Registration:** Working (fixed middleware issues)
-✅ **Car Scraping:** AutoScout24 integration with 15+ real listings
-✅ **Mobile App:** Production-ready Android APK (5.8MB)
-✅ **Backend API:** FastAPI with SQLite database
-✅ **Frontend:** React + Ionic with real-time connectivity
-✅ **Background Tasks:** 5-minute scraping intervals
+## 🌐 Live Deployment
+
+- **Backend API**: https://auto-scouter-backend-production.up.railway.app
+- **API Documentation**: https://auto-scouter-backend-production.up.railway.app/docs
+- **Health Check**: https://auto-scouter-backend-production.up.railway.app/health
+- **Mobile APK**: `frontend/dist/apk/VehicleScout-cloud-release.apk` (5.8MB)
+
+## 🎯 **CURRENT STATUS: CLOUD DEPLOYED & FULLY FUNCTIONAL**
+
+✅ **Cloud Backend**: FastAPI deployed on Railway with PostgreSQL
+✅ **Mobile App**: Production-ready Android APK (5.8MB) with cloud connectivity
+✅ **Database**: PostgreSQL managed service on Railway
+✅ **API Endpoints**: Full REST API with authentication and vehicle management
+✅ **Real-time Features**: WebSocket support and live updates
+✅ **Production Ready**: HTTPS, security headers, and monitoring
+
+## 🏗️ Architecture Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Mobile App    │    │   Backend API   │    │   PostgreSQL    │
+│  (React/Ionic)  │◄──►│   (FastAPI)     │◄──►│   Database      │
+│                 │    │                 │    │   (Railway)     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Capacitor     │    │   Railway       │    │   Managed DB    │
+│   (Android)     │    │   Platform      │    │   Service       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Technology Stack
+
+**Backend:**
+- **Framework**: FastAPI (Python)
+- **Database**: PostgreSQL (Railway managed)
+- **Authentication**: JWT tokens
+- **API Documentation**: OpenAPI/Swagger
+- **Background Tasks**: Celery + Redis
+- **Web Scraping**: Selenium + BeautifulSoup
+- **Deployment**: Railway cloud platform
+
+**Frontend:**
+- **Framework**: React + TypeScript
+- **Mobile**: Ionic + Capacitor
+- **UI Components**: Tailwind CSS + shadcn/ui
+- **State Management**: TanStack Query
+- **Build Tool**: Vite
+- **Target Platform**: Android APK
+
+**Infrastructure:**
+- **Cloud Platform**: Railway
+- **Database**: PostgreSQL (managed service)
+- **Environment**: Production with HTTPS
+- **Monitoring**: Health checks and logging
 
 ## 🚀 Features
 
-- **Vehicle Search**: Advanced search and filtering of scraped vehicles
-- **Real-time Updates**: Live vehicle data updates via Server-Sent Events (SSE)
-- **24/7 Web Scraping**: Automated scraping from automotive websites
+- **Vehicle Search**: Advanced search and filtering with cloud backend
+- **Real-time Updates**: Live vehicle data updates via WebSocket connections
+- **Cloud Integration**: Fully deployed backend with PostgreSQL database
 - **Alert System**: Custom alerts for vehicle matches based on user criteria
 - **Dashboard**: Comprehensive system monitoring and analytics
 - **Notification Center**: Real-time notifications for new matches and system events
-- **User Authentication**: JWT-based authentication with secure login/registration
-- **Protected Routes**: Role-based access control for all user-specific features
+- **User Authentication**: JWT-based authentication with secure cloud backend
+- **Mobile App**: Native Android APK with offline capabilities
 - **Modern UI**: Responsive React interface with TypeScript and Tailwind CSS
-- **RESTful API**: FastAPI backend with automatic documentation and OpenAPI spec
+- **RESTful API**: FastAPI backend with automatic documentation and cloud deployment
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Python 3.11+
+- Android Studio (for mobile development)
+- Git
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/ezekaj/auto_scouter.git
+cd auto_scouter
+```
+
+### 2. Backend Setup (Local Development)
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Create local environment file
+cp .env.example .env
+# Edit .env with your local settings
+
+# Run the development server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 3. Frontend Setup
+
+```bash
+cd frontend
+npm install
+
+# Configure environment for local development
+cp .env.example .env
+# Edit .env to point to your local backend
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Generate Android APK
+./build_cloud_apk.sh
+```
+
+## 📱 Mobile App Installation
+
+### Download APK
+The production APK is available at: `frontend/dist/apk/VehicleScout-cloud-release.apk`
+
+### Installation Steps
+1. Download the APK file to your Android device
+2. Enable "Unknown Sources" in Settings > Security
+3. Tap the APK file to install
+4. Launch "Auto Scouter" app
+5. Register/login to start using the app
+
+### Features
+- ✅ Real-time vehicle listings from cloud backend
+- ✅ User registration and authentication
+- ✅ Advanced vehicle search and filtering
+- ✅ Alert creation and management
+- ✅ Offline mode with cached data
+- ✅ Push notifications (when Firebase configured)
 
 ## 🏗️ Project Structure
 
@@ -35,9 +162,9 @@ auto_scouter/
 │   │   ├── hooks/         # Custom React hooks
 │   │   ├── lib/           # Utilities and configurations
 │   │   └── types/         # TypeScript type definitions
-│   ├── public/
+│   ├── dist/apk/          # Generated Android APK
 │   ├── package.json
-│   └── vite.config.ts
+│   └── build_cloud_apk.sh # APK build script
 ├── backend/           # FastAPI backend
 │   ├── app/
 │   │   ├── core/          # Configuration and settings
@@ -47,7 +174,8 @@ auto_scouter/
 │   │   ├── services/      # Business logic services
 │   │   ├── scraper/       # Web scraping modules
 │   │   └── tasks/         # Background tasks
-│   ├── tests/             # Test suite
+│   ├── railway.json       # Railway deployment config
+│   └── migrate_to_cloud_db.py # Database migration script
 │   ├── requirements.txt
 │   └── setup_scraper.py   # Setup and initialization script
 └── README.md
@@ -241,13 +369,100 @@ CELERY_RESULT_BACKEND=redis://localhost:6379/0
 - **Alert Matching**: Automatic matching of vehicles to user alerts
 - **Multi-source Scraping**: Support for multiple automotive websites
 
+## 🔧 Configuration
+
+### Environment Variables
+
+**Backend (.env):**
+```bash
+DATABASE_URL=postgresql://user:pass@host:port/db
+SECRET_KEY=your-secret-key
+ENVIRONMENT=production
+LOG_LEVEL=INFO
+```
+
+**Frontend (.env.production):**
+```bash
+VITE_API_URL=https://auto-scouter-backend-production.up.railway.app/api/v1
+VITE_WS_BASE_URL=wss://auto-scouter-backend-production.up.railway.app/ws
+VITE_APP_ENVIRONMENT=production
+VITE_ENABLE_HTTPS_ONLY=true
+```
+
+## 🌐 API Endpoints
+
+### Authentication
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/refresh` - Refresh token
+
+### Vehicles
+- `GET /api/v1/vehicles` - List vehicles with filters
+- `GET /api/v1/vehicles/{id}` - Get vehicle details
+- `POST /api/v1/vehicles/search` - Advanced search
+
+### Alerts
+- `GET /api/v1/alerts` - List user alerts
+- `POST /api/v1/alerts` - Create new alert
+- `PUT /api/v1/alerts/{id}` - Update alert
+- `DELETE /api/v1/alerts/{id}` - Delete alert
+
+### System
+- `GET /health` - Health check
+- `GET /docs` - API documentation
+
+## 🚀 Deployment
+
+### Railway Backend Deployment
+
+The backend is automatically deployed to Railway. For manual deployment:
+
+```bash
+cd backend
+railway login
+railway link
+railway up
+```
+
+### Mobile App Build
+
+```bash
+cd frontend
+./build_cloud_apk.sh
+```
+
+This generates:
+- `dist/apk/VehicleScout-cloud-release.apk` - Production APK
+- `dist/apk/DEPLOYMENT_INFO.md` - Deployment information
+
+## 📊 Monitoring & Health
+
+- **Health Endpoint**: https://auto-scouter-backend-production.up.railway.app/health
+- **API Docs**: https://auto-scouter-backend-production.up.railway.app/docs
+- **Railway Dashboard**: Monitor deployment status and logs
+
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add: amazing feature'`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: See additional docs in the project root
+- **Issues**: Create an issue on GitHub
+- **Backend Logs**: Check Railway deployment logs
+- **API Testing**: Use the interactive docs at `/docs`
+
+---
+
+**Built with ❤️ using FastAPI, React, Ionic, and Railway**
 
 ### Commit Message Format
 
