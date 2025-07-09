@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Vehicle Scout - Cloud APK Build Script
-# Builds production APK that connects to cloud backend
+# Builds production APK that connects to Render cloud backend
 
 set -e  # Exit on any error
 
@@ -32,23 +32,23 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if Railway URL is configured
-check_railway_url() {
-    print_status "Checking Railway backend URL..."
-    
-    if grep -q "your-app.railway.app" .env.production; then
-        print_warning "Railway URL not configured!"
-        print_warning "Please update .env.production with your actual Railway deployment URL"
-        print_warning "Example: VITE_API_BASE_URL=https://vehicle-scout-abc123.railway.app/api/v1"
-        
+# Check if Render URL is configured
+check_render_url() {
+    print_status "Checking Render backend URL..."
+
+    if grep -q "your-app.onrender.com" .env.production; then
+        print_warning "Render URL not configured!"
+        print_warning "Please update .env.production with your actual Render deployment URL"
+        print_warning "Example: VITE_API_BASE_URL=https://auto-scouter-backend-abc123.onrender.com/api/v1"
+
         read -p "Do you want to continue anyway? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            print_error "Deployment cancelled. Please configure Railway URL first."
+            print_error "Deployment cancelled. Please configure Render URL first."
             exit 1
         fi
     else
-        print_success "Railway URL configured"
+        print_success "Render URL configured"
     fi
 }
 
@@ -181,13 +181,13 @@ generate_deployment_info() {
 
 ### VehicleScout-cloud-release.apk
 - **Purpose:** Production deployment
-- **Backend:** Cloud (Railway)
+- **Backend:** Cloud (Render)
 - **Push Notifications:** $(grep -q "your-firebase-api-key" .env.production && echo "Disabled (Firebase not configured)" || echo "Enabled (Firebase configured)")
 - **Installation:** Enable "Unknown Sources" in Android settings
 
 ### VehicleScout-cloud-debug.apk
 - **Purpose:** Development and testing
-- **Backend:** Cloud (Railway)
+- **Backend:** Cloud (Render)
 - **Installation:** Enable "Unknown Sources" in Android settings
 
 ## Backend Configuration
@@ -216,12 +216,12 @@ $(grep -q "your-firebase-api-key" .env.production || echo "- ✅ Push notificati
 
 - **Backend Health:** \$(API_URL)/health
 - **API Documentation:** \$(API_URL)/docs
-- **Issues:** Check Railway deployment logs
+- **Issues:** Check Render deployment logs
 
 ---
 
 **Built with:** Ionic + Capacitor + React + TypeScript
-**Backend:** FastAPI + PostgreSQL (Railway)
+**Backend:** FastAPI + PostgreSQL (Render)
 **Notifications:** Firebase Cloud Messaging
 EOF
 
@@ -233,7 +233,7 @@ main() {
     print_status "Starting cloud APK build process..."
     
     # Check prerequisites
-    check_railway_url
+    check_render_url
     check_firebase_config
     
     # Build process
