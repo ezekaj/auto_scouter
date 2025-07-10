@@ -139,6 +139,34 @@ function App() {
               </Layout>
             } />
 
+            {/* Additional routes for mobile navigation */}
+            <Route path="/saved" element={
+              <Layout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Saved Vehicles</h1>
+                  <p className="text-muted-foreground">Your saved vehicles will appear here.</p>
+                </div>
+              </Layout>
+            } />
+
+            <Route path="/analytics" element={
+              <Layout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Analytics</h1>
+                  <p className="text-muted-foreground">Vehicle search analytics and insights.</p>
+                </div>
+              </Layout>
+            } />
+
+            <Route path="/settings" element={
+              <Layout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Settings</h1>
+                  <p className="text-muted-foreground">App settings and preferences.</p>
+                </div>
+              </Layout>
+            } />
+
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, Filter, Grid, List, Plus, AlertTriangle, Car, Bell, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
@@ -15,6 +17,22 @@ export const Dashboard: React.FC = () => {
   React.useEffect(() => {
     console.log('Dashboard component mounted')
   }, [])
+
+  // Navigation handlers
+  const handleCreateAlert = () => {
+    console.log('Navigating to alerts page')
+    navigate('/alerts')
+  }
+
+  const handleAdvancedSearch = () => {
+    console.log('Navigating to search page')
+    navigate('/search')
+  }
+
+  const handleSavedSearches = () => {
+    console.log('Navigating to saved vehicles')
+    navigate('/saved')
+  }
 
   return (
     <div className="space-y-6">
@@ -29,6 +47,7 @@ export const Dashboard: React.FC = () => {
         <Button
           className="auto-scouter-gradient w-full sm:w-auto"
           aria-label="Create a new vehicle alert"
+          onClick={handleCreateAlert}
         >
           <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           <span className="sm:inline">Create Alert</span>
@@ -200,15 +219,30 @@ export const Dashboard: React.FC = () => {
               <CardTitle className="text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start" aria-label="Create a new vehicle alert">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                aria-label="Create a new vehicle alert"
+                onClick={handleCreateAlert}
+              >
                 <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                 Create New Alert
               </Button>
-              <Button variant="outline" className="w-full justify-start" aria-label="Open advanced vehicle search">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                aria-label="Open advanced vehicle search"
+                onClick={handleAdvancedSearch}
+              >
                 <Search className="mr-2 h-4 w-4" aria-hidden="true" />
                 Advanced Search
               </Button>
-              <Button variant="outline" className="w-full justify-start" aria-label="View saved vehicle searches">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                aria-label="View saved vehicle searches"
+                onClick={handleSavedSearches}
+              >
                 <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
                 Saved Searches
               </Button>
