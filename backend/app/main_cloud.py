@@ -13,11 +13,16 @@ import asyncio
 
 # Cloud configuration
 from app.core.cloud_config import (
-    get_cloud_settings, 
-    setup_logging, 
+    get_cloud_settings,
+    setup_logging,
     validate_cloud_environment,
     get_cors_origins
 )
+
+# Initialize cloud settings and logging first
+cloud_settings = get_cloud_settings()
+setup_logging()
+logger = logging.getLogger(__name__)
 
 # Core imports with error handling
 import traceback
@@ -66,10 +71,7 @@ except Exception as e:
     logger.error(traceback.format_exc())
     BackgroundScraper = None
 
-# Initialize cloud settings and logging
-cloud_settings = get_cloud_settings()
-setup_logging()
-logger = logging.getLogger(__name__)
+# Cloud settings already initialized above
 
 # Global scraper instance for cloud deployment
 background_scraper = None

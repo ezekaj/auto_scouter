@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { api } from '@/lib/api';
-import { apiWithFallback } from '@/utils/backendStatus';
 
 interface Alert {
   id: number;
@@ -89,7 +88,7 @@ export const useAlerts = () => {
       if (filters.page) params.append('page', filters.page.toString());
       if (filters.pageSize) params.append('page_size', filters.pageSize.toString());
 
-      const response = await apiWithFallback.get(`/alerts/?${params.toString()}`);
+      const response = await api.get(`/alerts/?${params.toString()}`);
 
       setAlerts(response.data.alerts);
       setPagination(response.data.pagination);
@@ -111,7 +110,7 @@ export const useAlerts = () => {
 
   const createAlert = useCallback(async (alertData: Partial<Alert>): Promise<Alert> => {
     try {
-      const response = await apiWithFallback.post('/alerts/', alertData);
+      const response = await api.post('/alerts/', alertData);
       const newAlert = response.data;
       
       // Update local state

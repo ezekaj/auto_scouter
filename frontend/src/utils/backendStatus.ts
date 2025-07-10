@@ -90,147 +90,24 @@ class BackendStatusManager {
   }
 }
 
-// Fallback data for when backend is unavailable
-export const fallbackData = {
-  alerts: [
-    {
-      id: 1,
-      name: "BMW 3 Series Alert",
-      description: "Looking for a BMW 3 Series under €25,000",
-      make: "BMW",
-      model: "3 Series",
-      max_price: 25000,
-      min_year: 2018,
-      is_active: true,
-      notification_frequency: "daily",
-      trigger_count: 0,
-      max_notifications_per_day: 5,
-      created_at: new Date().toISOString(),
-      user_id: 1
-    },
-    {
-      id: 2,
-      name: "Electric Vehicle Alert",
-      description: "Any electric vehicle in good condition",
-      fuel_type: "Electric",
-      condition: "good",
-      is_active: false,
-      notification_frequency: "immediate",
-      trigger_count: 3,
-      max_notifications_per_day: 10,
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      user_id: 1
-    }
-  ],
-  vehicles: [
-    {
-      id: 1,
-      make: "BMW",
-      model: "3 Series",
-      year: 2019,
-      price: 22000,
-      mileage: 45000,
-      fuel_type: "Gasoline",
-      transmission: "Automatic",
-      location: "Tirana",
-      image_url: "/placeholder-car.jpg",
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 2,
-      make: "Tesla",
-      model: "Model 3",
-      year: 2021,
-      price: 35000,
-      mileage: 15000,
-      fuel_type: "Electric",
-      transmission: "Automatic",
-      location: "Durres",
-      image_url: "/placeholder-car.jpg",
-      created_at: new Date().toISOString()
-    }
-  ]
-}
+// No fallback data - production mode requires live backend
 
-// Enhanced API wrapper with fallback
-export const apiWithFallback = {
+// Production API wrapper - no fallback, direct API calls only
+export const productionApi = {
   async get(url: string, config?: any) {
-    const backendStatus = BackendStatusManager.getInstance().getStatus()
-    
-    if (!backendStatus.isOnline) {
-      console.warn('Backend offline, using fallback data for:', url)
-      return this.getFallbackResponse(url)
-    }
-
-    try {
-      return await api.get(url, config)
-    } catch (error) {
-      console.warn('API call failed, using fallback data for:', url, error)
-      return this.getFallbackResponse(url)
-    }
+    return await api.get(url, config)
   },
 
   async post(url: string, data?: any, config?: any) {
-    const backendStatus = BackendStatusManager.getInstance().getStatus()
-    
-    if (!backendStatus.isOnline) {
-      console.warn('Backend offline, simulating POST for:', url)
-      return this.simulatePostResponse(url, data)
-    }
-
-    try {
-      return await api.post(url, data, config)
-    } catch (error) {
-      console.warn('API POST failed, simulating response for:', url, error)
-      return this.simulatePostResponse(url, data)
-    }
+    return await api.post(url, data, config)
   },
 
-  getFallbackResponse(url: string) {
-    if (url.includes('/alerts')) {
-      return {
-        data: {
-          alerts: fallbackData.alerts,
-          pagination: {
-            page: 1,
-            pageSize: 20,
-            totalCount: fallbackData.alerts.length,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false
-          }
-        }
-      }
-    }
-
-    if (url.includes('/vehicles') || url.includes('/automotive/vehicles')) {
-      return {
-        data: fallbackData.vehicles
-      }
-    }
-
-    return { data: [] }
+  async put(url: string, data?: any, config?: any) {
+    return await api.put(url, data, config)
   },
 
-  simulatePostResponse(url: string, data: any) {
-    if (url.includes('/alerts')) {
-      const newAlert = {
-        id: Date.now(),
-        ...data,
-        user_id: 1,
-        is_active: true,
-        trigger_count: 0,
-        created_at: new Date().toISOString()
-      }
-      
-      fallbackData.alerts.push(newAlert)
-      
-      return {
-        data: newAlert
-      }
-    }
-
-    return { data: { success: true, message: 'Simulated response' } }
+  async delete(url: string, config?: any) {
+    return await api.delete(url, config)
   }
 }
 
