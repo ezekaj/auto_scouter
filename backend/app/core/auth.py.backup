@@ -1,14 +1,12 @@
 """
-Authentication utilities using Argon2 instead of bcrypt to avoid Rust compilation
-Alternative implementation for Render deployment
+Authentication utilities for JWT token handling and password management
 """
 
 from datetime import datetime, timedelta
 from typing import Optional, Union
 import jwt
 from jwt.exceptions import InvalidTokenError
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, HashingError
+from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -17,33 +15,21 @@ from app.core.config import settings
 from app.models.base import get_db
 from app.models.scout import User
 
-# Password hashing with Argon2
-ph = PasswordHasher()
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT token security
 security = HTTPBearer()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against its hash using Argon2"""
-    try:
-        ph.verify(hashed_password, plain_password)
-        return True
-    except VerifyMismatchError:
-        return False
-    except Exception:
-        return False
+    """Verify a plain password against its hash"""
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Generate password hash using Argon2"""
-    try:
-        return ph.hash(password)
-    except HashingError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Password hashing failed: {str(e)}"
-        )
+    """Generate password hash"""
+    return pwd_context.hash(password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -69,31 +55,22 @@ def verify_token(token: str) -> Optional[dict]:
 
 
 def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
-    """Authenticate user with username and password"""
-    user = db.query(User).filter(User.username == username).first()
+    """Authenticate user with username/email and password"""
+    # Try to find user by username or email
+    user = db.query(User).filter(
+        (User.username == username) | (User.email == username)
+    ).first()
+    
     if not user:
         return None
-    if not verify_password(password, user.hashed_password):
+    
+    if not verify_password(password, user.password_hash):
         return None
+    
     return user
 
 
-def create_user(db: Session, username: str, email: str, password: str) -> User:
-    """Create a new user"""
-    hashed_password = get_password_hash(password)
-    user = User(
-        username=username,
-        email=email,
-        hashed_password=hashed_password,
-        is_active=True
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-async def get_current_user(
+def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
@@ -105,7 +82,8 @@ async def get_current_user(
     )
     
     try:
-        payload = verify_token(credentials.credentials)
+        token = credentials.credentials
+        payload = verify_token(token)
         if payload is None:
             raise credentials_exception
         
@@ -120,21 +98,20 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Inactive user"
+        )
+    
     return user
 
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    """Get current active user"""
+def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+    """Get current active user (additional check for user status)"""
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Inactive user"
+        )
     return current_user
-
-
-def get_user_by_username(db: Session, username: str) -> Optional[User]:
-    """Get user by username"""
-    return db.query(User).filter(User.username == username).first()
-
-
-def get_user_by_email(db: Session, email: str) -> Optional[User]:
-    """Get user by email"""
-    return db.query(User).filter(User.email == email).first()
