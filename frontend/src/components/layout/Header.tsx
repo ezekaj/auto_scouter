@@ -3,16 +3,12 @@ import { Link } from 'react-router-dom'
 import { Search, Bell, Menu, Car } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
-import { useTranslation } from 'react-i18next'
 
 interface HeaderProps {
   onMenuClick?: () => void
 }
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-  const { t } = useTranslation()
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -41,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder={t('common.search') + "..."}
+              placeholder="Search..."
               className="pl-10"
               aria-label="Global search"
             />
@@ -50,19 +46,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
         {/* Right side actions */}
         <div className="flex items-center space-x-4">
-          {/* Language Switcher */}
-          <LanguageSwitcher />
-
           {/* Notifications */}
           <Link to="/notifications">
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-              >
-                3
-              </Badge>
             </Button>
           </Link>
         </div>

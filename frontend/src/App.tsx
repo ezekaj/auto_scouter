@@ -6,7 +6,7 @@ import { errorHandler } from '@/utils/errorHandler'
 import { MobileUtils } from '@/utils/mobile'
 import { nativeService } from '@/services/nativeService'
 import { initializeMobileEvents } from '@/utils/mobileEvents'
-import './i18n' // Initialize i18n
+
 
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { Layout } from '@/components/layout/Layout'

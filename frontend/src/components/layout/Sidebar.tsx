@@ -7,37 +7,30 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
-import { useTranslation } from 'react-i18next'
-
-const getNavigation = (t: any) => [
+const navigation = [
   {
-    name: t('navigation.dashboard'),
+    name: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
-    name: t('navigation.vehicles'),
+    name: 'Vehicle Search',
     href: '/search',
     icon: Search,
   },
   {
-    name: t('navigation.alerts'),
+    name: 'Alerts',
     href: '/alerts',
     icon: AlertTriangle,
-    badge: '5',
   },
   {
-    name: t('common.notifications'),
+    name: 'Notifications',
     href: '/notifications',
     icon: Bell,
-    badge: '3',
   },
 ]
 
 export const Sidebar: React.FC = () => {
-  const { t } = useTranslation()
-  const navigation = getNavigation(t)
 
   return (
     <aside
@@ -66,11 +59,7 @@ export const Sidebar: React.FC = () => {
                 <Icon className="h-4 w-4" aria-hidden="true" />
                 <span>{item.name}</span>
               </div>
-              {item.badge && (
-                <Badge variant="secondary" className="ml-auto">
-                  {item.badge}
-                </Badge>
-              )}
+
             </NavLink>
           )
         })}

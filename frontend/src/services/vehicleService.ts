@@ -110,22 +110,7 @@ export class VehicleService {
   async getPopularMakes(): Promise<string[]> {
     try {
       const response = await api.get('/automotive/makes')
-      return response.data || [
-        'Volkswagen',
-        'Peugeot',
-        'Citroën',
-        'Opel',
-        'BMW',
-        'Audi',
-        'Mercedes-Benz',
-        'Fiat',
-        'Ford',
-        'Renault',
-        'Toyota',
-        'Honda',
-        'Jeep',
-        'Mini'
-      ]
+      return response.data || []
     } catch (error) {
       console.error('Error getting popular makes:', error)
       return []
@@ -159,12 +144,7 @@ export class VehicleService {
       return response.data
     } catch (error) {
       console.error('Error getting vehicle stats:', error)
-      return {
-        total: 0,
-        averagePrice: 0,
-        priceRange: { min: 0, max: 0 },
-        popularMakes: []
-      }
+      throw error
     }
   }
 
