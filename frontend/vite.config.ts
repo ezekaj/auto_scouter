@@ -16,11 +16,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    // Production optimizations
+    // Production optimizations (less aggressive for mobile debugging)
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false, // Keep console logs for mobile debugging
         drop_debugger: true,
       },
     },
@@ -39,8 +39,8 @@ export default defineConfig({
     // Asset optimization
     assetsInlineLimit: 4096,
     chunkSizeWarningLimit: 1000,
-    // Source maps disabled for production
-    sourcemap: false,
+    // Enable source maps for mobile debugging
+    sourcemap: true,
   },
   // Preview server configuration
   preview: {

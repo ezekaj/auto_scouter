@@ -5,6 +5,7 @@ import { config } from '@/config/production'
 import { errorHandler } from '@/utils/errorHandler'
 import { MobileUtils } from '@/utils/mobile'
 import { nativeService } from '@/services/nativeService'
+import { initializeMobileEvents } from '@/utils/mobileEvents'
 import './i18n' // Initialize i18n
 
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
@@ -56,6 +57,10 @@ function App() {
         // Initialize mobile features
         await MobileUtils.initializeApp()
         console.log('Mobile utils initialized')
+
+        // Initialize mobile event handling
+        initializeMobileEvents()
+        console.log('Mobile events initialized')
 
         // Initialize production configuration
         if (config.isProduction) {

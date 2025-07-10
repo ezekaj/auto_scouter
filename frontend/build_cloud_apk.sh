@@ -98,12 +98,23 @@ build_web_app() {
 # Sync with Capacitor
 sync_capacitor() {
     print_status "Syncing with Capacitor..."
-    
+
+    # Clean previous sync
+    print_status "Cleaning previous Capacitor sync..."
+    rm -rf android/app/src/main/assets/public
+
     # Sync the built web app with Capacitor
     npx cap sync android
-    
+
     if [ $? -eq 0 ]; then
         print_success "Capacitor sync completed"
+
+        # Copy additional mobile assets if needed
+        print_status "Copying mobile-specific assets..."
+        if [ -d "src/assets/mobile" ]; then
+            cp -r src/assets/mobile/* android/app/src/main/assets/public/ 2>/dev/null || true
+        fi
+
     else
         print_error "Capacitor sync failed"
         exit 1
