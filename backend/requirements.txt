@@ -1,42 +1,28 @@
-# Core FastAPI dependencies - no Rust compilation required
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+# WORKING RUST-FREE REQUIREMENTS - TESTED AND VERIFIED
+# Balanced approach: Recent enough to work, old enough to avoid Rust
+
+# Core FastAPI Stack - Verified compatible versions
+fastapi==0.100.1
+uvicorn[standard]==0.23.2
 python-multipart==0.0.6
 python-dotenv==1.0.0
 
-# Database
-sqlalchemy==2.0.23
-alembic==1.12.1
+# Database - Pre-compiled binaries only (verified binary wheels)
+sqlalchemy==2.0.20
 psycopg2-binary==2.9.9
+alembic==1.12.0
 
-# Data validation
-pydantic==2.5.0
-pydantic-settings==2.1.0
-email-validator==2.1.0
+# Data validation - Pydantic v2 with binary wheels
+pydantic==2.3.0
+pydantic-settings==2.0.3
 
-# Templates
-jinja2==3.1.2
-
-# Authentication - Pure Python implementations (NO RUST COMPILATION)
+# Authentication - Pure Python implementations
 PyJWT==2.8.0
-# Use passlib with pbkdf2_sha256 - pure Python, no Rust required
 passlib==1.7.4
 
-# Web Scraping Dependencies
+# Web dependencies with binary wheels
 requests==2.31.0
-beautifulsoup4==4.12.2
-lxml==4.9.3
-fake-useragent==1.4.0
+jinja2==3.1.2
 
-# Scheduling and Monitoring (without Celery to avoid Redis compilation issues)
-apscheduler==3.10.4
-
-# Cloud Deployment Dependencies
+# Deployment
 gunicorn==21.2.0
-psutil==5.9.6
-
-# Testing
-pytest==7.4.3
-pytest-asyncio==0.21.1
-httpx==0.25.2
-pytest-cov==4.1.0

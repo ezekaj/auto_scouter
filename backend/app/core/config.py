@@ -92,9 +92,11 @@ class Settings(BaseSettings):
     SCRAPER_ENABLE_METRICS: bool = True
     SCRAPER_LOG_LEVEL: str = "INFO"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": True,
+        "extra": "ignore"  # Ignore extra fields instead of forbidding them
+    }
 
 
 settings = Settings()

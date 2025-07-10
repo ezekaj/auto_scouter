@@ -4,14 +4,23 @@ User and Authentication Schemas
 This module contains Pydantic schemas for user management and authentication.
 """
 
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime
 
-
+# Simple email validation function
+def validate_email(email: str) -> str:
+    """Simple email validation without external dependencies"""
+    if '@' not in email or '.' not in email.split('@')[1]:
+        raise ValueError('Invalid email format')
+    return email
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="Username (3-50 characters)")
-    email: EmailStr = Field(..., description="Valid email address")
+    email: str = Field(..., description="Valid email address")
+
+    @validator('email')
+    def validate_email_format(cls, v):
+        return validate_email(v)
 
 
 class UserCreate(UserBase):
@@ -32,8 +41,14 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     is_active: Optional[bool] = None
+
+    @validator('email')
+    def validate_email_format(cls, v):
+        if v is not None:
+            return validate_email(v)
+        return v
 
 
 class UserInDB(UserBase):
