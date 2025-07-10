@@ -2,7 +2,7 @@ services:
   - type: web
     name: auto-scouter-backend
     env: python
-    buildCommand: cd backend && pip install --upgrade pip && pip install --only-binary=all --no-compile -r requirements.txt
+    buildCommand: cd backend && pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
     startCommand: cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level info
     healthCheckPath: /health
     plan: free
