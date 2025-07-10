@@ -1,14 +1,13 @@
 """
-Authentication utilities using Argon2 instead of bcrypt to avoid Rust compilation
-Alternative implementation for Render deployment
+Authentication utilities using pure Python PBKDF2 to avoid Rust compilation
+Render-compatible implementation with no Rust dependencies
 """
 
 from datetime import datetime, timedelta
 from typing import Optional, Union
 import jwt
 from jwt.exceptions import InvalidTokenError
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, HashingError
+from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -17,29 +16,26 @@ from app.core.config import settings
 from app.models.base import get_db
 from app.models.scout import User
 
-# Password hashing with Argon2
-ph = PasswordHasher()
+# Password hashing with PBKDF2 (pure Python, no Rust compilation)
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 # JWT token security
 security = HTTPBearer()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against its hash using Argon2"""
+    """Verify a plain password against its hash using PBKDF2"""
     try:
-        ph.verify(hashed_password, plain_password)
-        return True
-    except VerifyMismatchError:
-        return False
+        return pwd_context.verify(plain_password, hashed_password)
     except Exception:
         return False
 
 
 def get_password_hash(password: str) -> str:
-    """Generate password hash using Argon2"""
+    """Generate password hash using PBKDF2 (pure Python)"""
     try:
-        return ph.hash(password)
-    except HashingError as e:
+        return pwd_context.hash(password)
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Password hashing failed: {str(e)}"

@@ -49,7 +49,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         db_user = User(
             username=user_data.username,
             email=user_data.email,
-            password_hash=hashed_password
+            hashed_password=hashed_password
         )
 
         db.add(db_user)
@@ -161,14 +161,14 @@ def change_password(
 ):
     """Change user password"""
     # Verify current password
-    if not verify_password(password_data.current_password, current_user.password_hash):
+    if not verify_password(password_data.current_password, current_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect current password"
         )
-    
+
     # Update password
-    current_user.password_hash = get_password_hash(password_data.new_password)
+    current_user.hashed_password = get_password_hash(password_data.new_password)
     db.commit()
     
     return {"message": "Password updated successfully"}

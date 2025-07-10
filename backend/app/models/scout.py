@@ -4,7 +4,26 @@ from sqlalchemy.sql import func
 from app.models.base import Base
 
 
-# User model removed for single-user mode simplification
+# Minimal User model for authentication (single-user mode)
+class User(Base):
+    """Minimal User model for single-user authentication"""
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)  # Using hashed_password for consistency
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=True)  # Auto-verified for single-user mode
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Indexes for performance
+    __table_args__ = (
+        Index('idx_user_username', 'username'),
+        Index('idx_user_email', 'email'),
+        Index('idx_user_active', 'is_active'),
+    )
 
 
 class Scout(Base):

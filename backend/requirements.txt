@@ -17,10 +17,10 @@ email-validator==2.1.0
 # Templates
 jinja2==3.1.2
 
-# Authentication - Pure Python implementations
+# Authentication - Pure Python implementations (NO RUST COMPILATION)
 PyJWT==2.8.0
-# Use argon2 instead of bcrypt to avoid Rust compilation
-argon2-cffi==23.1.0
+# Use passlib with pbkdf2_sha256 - pure Python, no Rust required
+passlib==1.7.4
 
 # Web Scraping Dependencies
 requests==2.31.0
