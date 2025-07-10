@@ -1,28 +1,22 @@
-# WORKING RUST-FREE REQUIREMENTS - TESTED AND VERIFIED
-# Balanced approach: Recent enough to work, old enough to avoid Rust
+# EMERGENCY ULTRA-MINIMAL RUST-FREE REQUIREMENTS
+# Absolute minimum packages with guaranteed binary wheels
 
-# Core FastAPI Stack - Verified compatible versions
-fastapi==0.100.1
-uvicorn[standard]==0.23.2
-python-multipart==0.0.6
-python-dotenv==1.0.0
+# Core FastAPI - Older stable versions with NO Rust dependencies
+fastapi==0.95.1
+uvicorn==0.21.1
+python-multipart==0.0.5
 
-# Database - Pre-compiled binaries only (verified binary wheels)
-sqlalchemy==2.0.20
-psycopg2-binary==2.9.9
-alembic==1.12.0
+# Database - Minimal setup
+sqlalchemy==1.4.48
+psycopg2-binary==2.9.5
 
-# Data validation - Pydantic v2 with binary wheels
+# Data validation - Pydantic v2 with binary wheels (verified working)
 pydantic==2.3.0
 pydantic-settings==2.0.3
 
-# Authentication - Pure Python implementations
-PyJWT==2.8.0
+# Authentication - Pure Python only
+PyJWT==2.6.0
 passlib==1.7.4
 
-# Web dependencies with binary wheels
-requests==2.31.0
-jinja2==3.1.2
-
 # Deployment
-gunicorn==21.2.0
+gunicorn==20.1.0

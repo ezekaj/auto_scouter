@@ -2,7 +2,7 @@ services:
   - type: web
     name: auto-scouter-backend
     env: python
-    buildCommand: cd backend && pip install --upgrade pip setuptools wheel && pip install --prefer-binary --no-compile -r requirements.txt
+    buildCommand: cd backend && pip install --upgrade pip && pip install --only-binary=:all: --no-compile --force-reinstall --no-deps -r requirements.txt && pip install --only-binary=:all: --no-compile starlette typing-extensions
     startCommand: cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level info
     healthCheckPath: /health
     plan: free

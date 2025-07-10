@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 import logging
 
-from app.routers import automotive, alerts, notifications, cloud_notifications
+from app.routers import auth, automotive, alerts, notifications, cloud_notifications
 from app.core.config import settings
 from app.models.base import engine, Base
 
@@ -43,6 +43,7 @@ except Exception as e:
     logger.error(f"❌ Database initialization failed: {e}")
 
 # Include routers - simplified for single-user mode
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(automotive.router, prefix="/api/v1/automotive", tags=["vehicles"])
 app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])

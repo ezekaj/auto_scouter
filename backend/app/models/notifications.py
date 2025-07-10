@@ -87,7 +87,24 @@ class Notification(Base):
     )
 
 
-# NotificationPreferences model removed for single-user mode simplification
+# Minimal NotificationPreferences model for single-user mode
+class NotificationPreferences(Base):
+    """Minimal notification preferences for single-user mode"""
+    __tablename__ = "notification_preferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    email_enabled = Column(Boolean, default=True)
+    push_enabled = Column(Boolean, default=True)
+    in_app_enabled = Column(Boolean, default=True)
+    max_notifications_per_day = Column(Integer, default=10)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Indexes for performance
+    __table_args__ = (
+        Index('idx_notification_prefs_user', 'user_id'),
+    )
 
 
 class NotificationTemplate(Base):

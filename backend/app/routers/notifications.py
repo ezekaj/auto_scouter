@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import math
 
 from app.models.base import get_db
+from app.models.scout import User
 from app.models.notifications import (
     Notification, NotificationPreferences, NotificationTemplate,
     NotificationStatus, NotificationType
@@ -21,6 +22,7 @@ from app.schemas.notifications import (
     NotificationPreferencesResponse, NotificationPreferencesUpdate,
     NotificationStats, UserNotificationStats, NotificationUpdate
 )
+from app.core.auth import get_current_active_user
 
 router = APIRouter()
 
