@@ -1,272 +1,183 @@
-# Auto Scouter
+# Supabase CLI
 
-A comprehensive vehicle alert system for the Albanian automotive market, featuring automated scraping, intelligent alerts, and a mobile-responsive interface.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-## 🚀 Features
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-- **🚗 AutoUno Scraper**: Automated scraping of realistic Albanian vehicle data
-- **🔔 Smart Alerts**: Create custom alerts with advanced filtering (make, model, price, year, location, fuel type)
-- **📱 Mobile App**: React-based responsive application for managing alerts
-- **🎯 Alert Matching**: Intelligent algorithm matches alerts against vehicle listings
-- **📊 Real-time Data**: Live vehicle listings with quality scoring
-- **🔍 Advanced Search**: Filter by multiple criteria with range support
+This repository contains all the functionality for Supabase CLI.
 
-## 🏗️ Architecture
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-### Backend (Python/FastAPI)
-- **FastAPI** web framework with async support
-- **PostgreSQL** database with proper models
-- **AutoUno Scraper** for realistic Albanian vehicle data
-- **RESTful API** with comprehensive endpoints
-- **Alert System** with matching algorithm
+## Getting started
 
-### Frontend (React/TypeScript)
-- **React 18** with TypeScript
-- **Vite** build system for fast development
-- **Mobile-responsive** design
-- **Real-time API** integration
-- **Form validation** and error handling
+### Install the CLI
 
-## 🚀 Quick Start
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
-### Backend Setup
-
-1. **Clone and navigate**:
-   ```bash
-   git clone <repository-url>
-   cd auto_scouter/backend
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Set up environment**:
-   ```bash
-   # Create .env file with:
-   DATABASE_URL=postgresql://user:password@localhost/auto_scouter
-   ENVIRONMENT=development
-   SECRET_KEY=your-secret-key
-   SCRAPING_INTERVAL_MINUTES=30
-   ```
-
-4. **Run the application**:
-   ```bash
-   python -m uvicorn app.main_cloud:app --reload
-   ```
-
-### Frontend Setup
-
-1. **Navigate and install**:
-   ```bash
-   cd auto_scouter/frontend
-   npm install
-   ```
-
-2. **Configure environment**:
-   ```bash
-   # Update .env with your backend URL:
-   VITE_API_URL=http://localhost:8000/api/v1
-   VITE_WS_BASE_URL=ws://localhost:8000/ws
-   ```
-
-3. **Start development server**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Open in browser**: http://localhost:5173
-
-## 🌐 Production Deployment
-
-### Backend Deployment (Render)
-
-**Automated Deployment** (Recommended):
-1. **Connect GitHub** to Render
-2. **Create Blueprint** deployment
-3. **Select repository** and branch
-4. **Render automatically**:
-   - Creates web service from `render.yaml`
-   - Sets up PostgreSQL database
-   - Configures environment variables
-   - Deploys application
-
-**Manual Configuration**:
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `python -m uvicorn app.main_cloud:app --host 0.0.0.0 --port $PORT`
-- **Health Check**: `/health`
-
-### Frontend Deployment
-
-**Vercel** (Recommended):
 ```bash
-npm run build
-# Deploy dist/ folder to Vercel
+npm i supabase --save-dev
 ```
 
-**Netlify**:
-- Build command: `npm run build`
-- Publish directory: `dist`
+To install the beta release channel:
 
-## 📡 API Endpoints
-
-### 🚗 Vehicle Endpoints
-```
-GET  /api/v1/automotive/vehicles/simple?limit=10&make=BMW
-```
-- Returns paginated vehicle listings
-- Supports filtering by make, model, price range
-- Includes data quality scores
-
-### 🔔 Alert Endpoints
-```
-GET  /api/v1/alerts/                    # List all alerts
-POST /api/v1/alerts/                    # Create new alert
-POST /api/v1/alerts/{id}/test           # Test alert matching
-```
-
-**Alert Creation Example**:
-```json
-{
-  "name": "BMW 3 Series Alert",
-  "description": "Looking for BMW 3 Series under 25k",
-  "make": "BMW",
-  "model": "3 Series",
-  "max_price": 25000,
-  "min_year": 2015,
-  "fuel_type": "Diesel",
-  "city": "Tiranë",
-  "is_active": true,
-  "notification_frequency": "immediate"
-}
-```
-
-### 🏥 System Endpoints
-```
-GET  /health                           # Health check with version info
-GET  /                                 # API information
-```
-
-## 🧪 Testing
-
-### Backend Testing
 ```bash
-cd backend
-python test_render_deployment.py https://your-app.onrender.com
+npm i supabase@beta --save-dev
 ```
 
-**Expected Output**:
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+
 ```
-✅ Health Endpoint         PASS
-✅ Vehicle Listings        PASS  
-✅ Alert Creation          PASS
-✅ Alert Retrieval         PASS
-✅ Alert Testing           PASS
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
 
-### Frontend Testing
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+
+<details>
+  <summary><b>macOS</b></summary>
+
+  Available via [Homebrew](https://brew.sh). To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Windows</b></summary>
+
+  Available via [Scoop](https://scoop.sh). To install:
+
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
+
+  To upgrade:
+
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
 ```bash
-cd frontend
-node test_mobile_app_connection.js
+supabase bootstrap
 ```
 
-**Tests**:
-- ✅ Backend connectivity
-- ✅ API endpoint availability
-- ✅ CORS configuration
-- ✅ Mobile app compatibility
+Or using npx:
 
-## 📊 Project Status
-
-### ✅ Completed Features
-- **AutoUno Scraper**: Generates realistic Albanian vehicle data
-- **Alert System**: Complete CRUD with advanced filtering
-- **Mobile App**: Responsive interface with form validation
-- **API Integration**: RESTful endpoints with error handling
-- **Database**: PostgreSQL with proper models
-- **Deployment**: Render configuration with automated setup
-
-### 🎯 Key Metrics
-- **10+ Car Makes**: BMW, Mercedes, Audi, Toyota, etc.
-- **Realistic Pricing**: €5,000 - €50,000 range
-- **Albanian Cities**: Tiranë, Durrës, Vlorë, Shkodër, etc.
-- **Data Quality**: 0.8-0.95 scoring system
-- **Response Time**: <2s for API endpoints
-
-## 🛠️ Development
-
-### Project Structure
-```
-auto_scouter/
-├── backend/
-│   ├── app/
-│   │   ├── main_cloud.py          # Main FastAPI application
-│   │   ├── scraper/
-│   │   │   └── autouno_simple.py  # Vehicle scraper
-│   │   └── models/                # Database models
-│   ├── render.yaml                # Render deployment config
-│   └── requirements.txt           # Python dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── components/alerts/     # Alert management UI
-│   │   ├── services/              # API services
-│   │   └── hooks/                 # React hooks
-│   ├── .env                       # Environment config
-│   └── package.json               # Node dependencies
-└── README.md                      # This file
-```
-
-### Adding New Features
-1. **Backend**: Add endpoints to `main_cloud.py`
-2. **Frontend**: Create components in `src/components/`
-3. **Database**: Update models and run migrations
-4. **Testing**: Add tests for new functionality
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Backend not responding**:
 ```bash
-# Check health endpoint
-curl https://your-app.onrender.com/health
-
-# Check logs
-render logs  # or dashboard
+npx supabase bootstrap
 ```
 
-**Mobile app connection issues**:
-```bash
-# Verify API URL in .env
-cat frontend/.env
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
 
-# Test connection
-node frontend/test_mobile_app_connection.js
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
 ```
-
-**Database connection errors**:
-- Verify `DATABASE_URL` environment variable
-- Check PostgreSQL service status
-- Ensure database exists and is accessible
-
-### Performance Tips
-- **Render Free Tier**: Apps sleep after 15 minutes of inactivity
-- **Cold Starts**: First request may take 30+ seconds
-- **Database**: Use connection pooling for better performance
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-**Auto Scouter** - Making vehicle hunting in Albania smarter and more efficient! 🚗✨
