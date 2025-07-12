@@ -12,9 +12,9 @@ import os
 class ScraperSettings(BaseSettings):
     """Configuration settings for the web scraper"""
     
-    # Target Website Configuration - AutoScout24 (European car marketplace)
-    BASE_URL: str = "https://www.autoscout24.com"
-    CARS_URL: str = "https://www.autoscout24.com/lst"
+    # Target Website Configuration - Ayvens Carmarket (Primary target)
+    BASE_URL: str = "https://carmarket.ayvens.com"
+    CARS_URL: str = "https://carmarket.ayvens.com/lots"
     
     # Request Configuration
     REQUEST_DELAY: float = 2.0  # Seconds between requests
@@ -62,14 +62,19 @@ class ScraperSettings(BaseSettings):
     ENABLE_SMART_RETRY: bool = True          # Smart retry logic for failed scraping
 
     # Multi-Source Configuration
-    ENABLE_AUTOSCOUT24: bool = True
-    ENABLE_MOBILE_DE: bool = True
-    ENABLE_GRUPPOAUTOUNO: bool = True
+    ENABLE_AYVENS: bool = True
+    ENABLE_AUTOSCOUT24: bool = False  # Disabled in favor of Ayvens
+    ENABLE_MOBILE_DE: bool = False
+    ENABLE_GRUPPOAUTOUNO: bool = False
 
     # Data Processing Configuration
     MAX_PAGES_TO_SCRAPE: int = 50
-    ENABLE_IMAGE_DOWNLOAD: bool = False
+    ENABLE_IMAGE_DOWNLOAD: bool = True
     IMAGE_STORAGE_PATH: str = "/tmp/scraped_images"
+    MAX_IMAGES_PER_VEHICLE: int = 5
+    IMAGE_RESIZE_ENABLED: bool = True
+    IMAGE_MAX_SIZE: tuple = (1200, 800)
+    IMAGE_QUALITY: int = 85
     
     # Database Configuration
     ENABLE_DEDUPLICATION: bool = True

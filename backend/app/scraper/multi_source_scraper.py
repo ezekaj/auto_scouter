@@ -28,35 +28,22 @@ class MultiSourceScraper:
     
     def __init__(self):
         self.sources = {
-            "autoscout24": {
-                "name": "AutoScout24",
+            "ayvens": {
+                "name": "Ayvens Carmarket",
                 "enabled": True,
-                "url": "https://www.autoscout24.com",
-                "country": "DE",
+                "url": "https://carmarket.ayvens.com",
+                "country": "EU",
                 "status": "active",
                 "last_scrape": None,
                 "total_scraped": 0
             },
-            "autouno": {
-                "name": "AutoUno",
-                "enabled": True,
-                "url": "https://www.autouno.it",
-                "country": "IT",
-                "status": "active",
-                "last_scrape": None,
-                "total_scraped": 0
-            },
-            "mobile_de": {
-                "name": "Mobile.de",
-                "enabled": False,
-                "url": "https://www.mobile.de",
-                "country": "DE",
-                "status": "disabled",
-                "last_scrape": None,
-                "total_scraped": 0
-            }
+
         }
-        
+
+    def get_sources(self) -> Dict[str, Dict[str, Any]]:
+        """Get all available sources"""
+        return self.sources
+
     def get_source_status(self) -> Dict[str, Any]:
         """Get status of all scraping sources"""
         return {
@@ -103,25 +90,28 @@ class MultiSourceScraper:
         start_time = datetime.utcnow()
         
         try:
-            # Simulate scraping process
             logger.info(f"Starting scraping from {source} (max: {max_vehicles})")
-            
-            # In a real implementation, this would call the actual scraper
-            # For now, we'll simulate a successful scrape
-            import time
-            import random
-            
-            time.sleep(1)  # Simulate scraping time
-            vehicles_found = random.randint(1, min(max_vehicles, 20))
-            
+
+            # Call the appropriate scraper based on source
+            vehicles_found = 0
+
+            if source == "ayvens":
+                from app.scraper.ayvens_scraper import AyvensCarmarketScraper
+                scraper = AyvensCarmarketScraper()
+                vehicles = scraper.scrape_all_listings(max_vehicles)
+                vehicles_found = len(vehicles)
+            else:
+                logger.error(f"Unknown or unsupported source: {source}")
+                vehicles_found = 0
+
             # Update source statistics
             self.sources[source]["last_scrape"] = datetime.utcnow().isoformat()
             self.sources[source]["total_scraped"] += vehicles_found
-            
+
             duration = (datetime.utcnow() - start_time).total_seconds()
-            
+
             logger.info(f"Scraping from {source} completed: {vehicles_found} vehicles")
-            
+
             return ScrapingResult(
                 success=True,
                 vehicles_scraped=vehicles_found,

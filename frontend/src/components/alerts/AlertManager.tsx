@@ -99,11 +99,18 @@ export const AlertManager: React.FC = () => {
 
   const handleCreateAlert = async (alertData: any) => {
     try {
-      await createAlert(alertData);
+      console.log('Creating alert with data:', alertData);
+      const result = await createAlert(alertData);
+      console.log('Alert created successfully:', result);
       setShowCreateForm(false);
       fetchAlerts();
-    } catch (error) {
+      // Show success message
+      alert('Alert created successfully!');
+    } catch (error: any) {
       console.error('Failed to create alert:', error);
+      // Show error message to user
+      const errorMessage = error.message || 'Failed to create alert. Please try again.';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -221,7 +228,9 @@ export const AlertManager: React.FC = () => {
       ) : error ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-red-600 mb-4">Failed to load alerts</p>
+            <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-muted-foreground mb-2">No alerts available</p>
+            <p className="text-sm text-muted-foreground mb-4">Create your first alert to get started with vehicle notifications</p>
             <Button variant="outline" onClick={() => fetchAlerts()}>
               Retry
             </Button>

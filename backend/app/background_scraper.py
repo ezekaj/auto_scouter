@@ -13,8 +13,7 @@ from typing import List, Dict, Any
 
 from app.models.base import SessionLocal
 from app.models.automotive import VehicleListing
-from app.scraper.autoscout24_scraper import AutoScout24Scraper
-from app.scraper.autouno_scraper import AutoUnoScraper
+from app.scraper.ayvens_scraper import AyvensCarmarketScraper
 from app.services.automotive_service import AutomotiveService
 from app.services.matching_service import VehicleMatchingService
 
@@ -25,8 +24,7 @@ class BackgroundScraper:
     """Simple background scraper that runs every 5 minutes"""
     
     def __init__(self):
-        self.autoscout_scraper = AutoScout24Scraper()
-        self.autouno_scraper = AutoUnoScraper()
+        self.ayvens_scraper = AyvensCarmarketScraper()
         self.running = False
         self.last_run = None
         
@@ -60,18 +58,12 @@ class BackgroundScraper:
         
         db = SessionLocal()
         try:
-            # Scrape vehicles from multiple sources
-            logger.info("Scraping vehicles from AutoScout24...")
-            autoscout_vehicles = self.autoscout_scraper.scrape_all_listings(max_vehicles=3)
-
-            logger.info("Scraping vehicles from AutoUno...")
-            autouno_vehicles = self.autouno_scraper.generate_test_data(count=3)  # Using test data for now
-
-            # Combine vehicles from all sources
-            vehicles = autoscout_vehicles + autouno_vehicles
+            # Scrape vehicles from Ayvens Carmarket (exclusive source)
+            logger.info("Scraping vehicles from Ayvens Carmarket...")
+            vehicles = self.ayvens_scraper.scrape_all_listings(max_vehicles=10)
             
             if not vehicles:
-                logger.info("No vehicles found in this cycle")
+                logger.warning("No vehicles found in this cycle - check authentication and website availability")
                 return
             
             # Process and save vehicles

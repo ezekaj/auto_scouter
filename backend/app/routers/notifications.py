@@ -27,7 +27,7 @@ from app.core.auth import get_current_active_user
 router = APIRouter()
 
 
-@router.get("/", response_model=NotificationHistoryResponse)
+@router.get("/", response_model=List[NotificationResponse])
 def get_notifications(
     notification_type: Optional[NotificationType] = Query(None, description="Filter by notification type"),
     status: Optional[NotificationStatus] = Query(None, description="Filter by status"),
@@ -40,7 +40,7 @@ def get_notifications(
 ):
     """Get notification history with filtering and pagination (single-user mode)"""
     try:
-        # Build query (no user filtering needed in single-user mode)
+        # Build query (simplified for single-user mode)
         query = db.query(Notification)
 
         # Apply filters
@@ -59,27 +59,11 @@ def get_notifications(
         if date_to:
             query = query.filter(Notification.created_at <= date_to)
 
-        # Get total count
-        total_count = query.count()
-
-        # Get unread count
-        unread_count = db.query(Notification).filter(Notification.is_read == False).count()
-
         # Apply pagination and ordering
         offset = (page - 1) * page_size
         notifications = query.order_by(desc(Notification.created_at)).offset(offset).limit(page_size).all()
 
-        # Calculate pagination info
-        total_pages = math.ceil(total_count / page_size) if total_count > 0 else 0
-
-        return NotificationHistoryResponse(
-            notifications=notifications,
-            total_count=total_count,
-            unread_count=unread_count,
-            page=page,
-            page_size=page_size,
-            total_pages=total_pages
-        )
+        return notifications
 
     except Exception as e:
         raise HTTPException(

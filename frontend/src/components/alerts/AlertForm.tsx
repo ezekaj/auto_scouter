@@ -64,7 +64,7 @@ interface AlertFormData {
 interface AlertFormProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: AlertFormData) => void
+  onSave: (data: any) => void
   initialData?: Partial<AlertFormData>
   mode: 'create' | 'edit'
 }
@@ -81,62 +81,46 @@ export const AlertForm: React.FC<AlertFormProps> = ({
   initialData = {},
   mode,
 }) => {
-  const [formData, setFormData] = useState<AlertFormData>({
-    name: '',
-    description: '',
-    make: '',
-    model: '',
-    minPrice: undefined,
-    maxPrice: undefined,
-    minYear: undefined,
-    maxYear: undefined,
-    maxMileage: undefined,
-    fuelType: [],
-    transmission: [],
-    bodyType: [],
-    city: '',
-    region: '',
-    locationRadius: undefined,
-    minEnginePower: undefined,
-    maxEnginePower: undefined,
-    condition: '',
-    isActive: true,
-    notificationFrequency: 'immediate',
-    maxNotificationsPerDay: 5,
-    ...initialData,
+  const [formData, setFormData] = useState<AlertFormData>(() => {
+    const defaultFormData = {
+      name: '',
+      description: '',
+      make: '',
+      model: '',
+      minPrice: undefined,
+      maxPrice: undefined,
+      minYear: undefined,
+      maxYear: undefined,
+      maxMileage: undefined,
+      fuelType: [],
+      transmission: [],
+      bodyType: [],
+      city: '',
+      region: '',
+      locationRadius: undefined,
+      minEnginePower: undefined,
+      maxEnginePower: undefined,
+      condition: '',
+      isActive: true,
+      notificationFrequency: 'immediate',
+      maxNotificationsPerDay: 5,
+    }
+
+    return {
+      ...defaultFormData,
+      ...initialData,
+    }
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        name: '',
-        description: '',
-        make: '',
-        model: '',
-        minPrice: undefined,
-        maxPrice: undefined,
-        minYear: undefined,
-        maxYear: undefined,
-        maxMileage: undefined,
-        fuelType: [],
-        transmission: [],
-        bodyType: [],
-        city: '',
-        region: '',
-        locationRadius: undefined,
-        minEnginePower: undefined,
-        maxEnginePower: undefined,
-        condition: '',
-        isActive: true,
-        notificationFrequency: 'immediate',
-        maxNotificationsPerDay: 5,
-        ...initialData,
-      })
+      // Only reset errors when dialog opens, don't reset form data
+      // Form data is already properly initialized in useState with initialData
       setErrors({})
     }
-  }, [isOpen, initialData])
+  }, [isOpen])
 
   const updateField = (field: keyof AlertFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -176,15 +160,47 @@ export const AlertForm: React.FC<AlertFormProps> = ({
     return Object.keys(newErrors).length === 0
   }
 
+  const transformFormData = (data: AlertFormData) => {
+    // Transform camelCase to snake_case for backend
+    return {
+      name: data.name,
+      description: data.description || undefined,
+      make: data.make || undefined,
+      model: data.model || undefined,
+      min_price: data.minPrice || undefined,
+      max_price: data.maxPrice || undefined,
+      min_year: data.minYear || undefined,
+      max_year: data.maxYear || undefined,
+      max_mileage: data.maxMileage || undefined,
+      fuel_type: data.fuelType?.length ? data.fuelType.join(',') : undefined,
+      transmission: data.transmission?.length ? data.transmission.join(',') : undefined,
+      body_type: data.bodyType?.length ? data.bodyType.join(',') : undefined,
+      city: data.city || undefined,
+      region: data.region || undefined,
+      location_radius: data.locationRadius || undefined,
+      min_engine_power: data.minEnginePower || undefined,
+      max_engine_power: data.maxEnginePower || undefined,
+      condition: data.condition || undefined,
+      is_active: data.isActive,
+      notification_frequency: data.notificationFrequency,
+      max_notifications_per_day: data.maxNotificationsPerDay,
+    }
+  }
+
   const handleSave = () => {
     if (validateForm()) {
-      onSave(formData)
+      const transformedData = transformFormData(formData)
+      onSave(transformedData)
     }
   }
 
   const handleTest = () => {
-    // Implementation for testing alert
-    console.log('Testing alert with data:', formData)
+    if (validateForm()) {
+      const transformedData = transformFormData(formData)
+      console.log('Testing alert with data:', transformedData)
+      // For now, just show an alert - this will be enhanced later
+      alert('Alert test functionality will be implemented. Data is valid and ready for testing.')
+    }
   }
 
   return (

@@ -81,6 +81,9 @@ class Settings(BaseSettings):
     # Webhook Security
     WEBHOOK_SECRET: str = ""
 
+    # Data Storage
+    DATA_DIR: str = os.getenv("DATA_DIR", "/tmp/auto_scouter_data")
+
     # Scraper Configuration
     SCRAPER_SCRAPING_ENABLED: bool = True
     SCRAPER_SCRAPING_INTERVAL_HOURS: int = 8

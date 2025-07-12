@@ -49,6 +49,7 @@ app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 app.include_router(cloud_notifications.router, prefix="/api/v1/push", tags=["push-notifications"])
 
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():

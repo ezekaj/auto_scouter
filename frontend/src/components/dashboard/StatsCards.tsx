@@ -31,7 +31,8 @@ export const StatsCards: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="card-hover">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 text-sm">Failed to load stats</p>
+            <p className="text-muted-foreground text-sm">No dashboard statistics available</p>
+            <p className="text-xs text-muted-foreground mt-1">Data will appear when the system is active</p>
           </CardContent>
         </Card>
       </div>

@@ -159,12 +159,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen =
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : error ? (
-              <div className="p-4 text-center text-red-600">
-                <p>Failed to load notifications</p>
+              <div className="p-4 text-center">
+                <Bell className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <p className="text-muted-foreground">No notifications available</p>
+                <p className="text-sm text-muted-foreground mt-1">Notifications will appear when alerts are triggered</p>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2"
+                  className="mt-3"
                   onClick={() => fetchNotifications(filters)}
                 >
                   Retry

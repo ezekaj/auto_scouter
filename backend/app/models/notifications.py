@@ -40,7 +40,8 @@ class Notification(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # Relationships (removed user_id for single-user mode)
+    # Relationships (keeping user_id for database compatibility)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     alert_id = Column(Integer, ForeignKey("alerts.id"), nullable=True, index=True)
     listing_id = Column(Integer, ForeignKey("vehicle_listings.id"), nullable=True, index=True)
     
@@ -74,7 +75,8 @@ class Notification(Base):
     priority = Column(Integer, default=1)  # 1=low, 2=medium, 3=high
     is_read = Column(Boolean, default=False, index=True)
     
-    # Relationships (simplified for single-user mode)
+    # Relationships (keeping for database compatibility)
+    user = relationship("User")
     alert = relationship("Alert", back_populates="notifications")
     listing = relationship("VehicleListing")
 

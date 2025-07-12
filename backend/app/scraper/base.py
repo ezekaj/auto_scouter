@@ -10,25 +10,22 @@ import random
 import logging
 from typing import Optional, Dict, List, Any
 from urllib.parse import urljoin, urlparse
-from fake_useragent import UserAgent
+# Removed fake_useragent dependency - using static user agents
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, WebDriverException
+# Selenium imports removed - not needed for basic scraping
+# from selenium import webdriver
+# from selenium.webdriver.chrome.options import Options
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.ui import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
+# from selenium.common.exceptions import TimeoutException, WebDriverException
 
 from app.scraper.config import scraper_settings, DEFAULT_HEADERS
-import structlog
 
-# Configure structlog if not already configured
-try:
-    logger = structlog.get_logger(__name__)
-except:
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+# Use standard logging instead of structlog
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class RateLimiter:
@@ -76,7 +73,7 @@ class BaseScraper:
             scraper_settings.REQUESTS_PER_MINUTE,
             scraper_settings.REQUESTS_PER_HOUR
         )
-        self.user_agent = UserAgent()
+        # Use static user agent instead of fake_useragent
         self.setup_session()
     
     def setup_session(self):
@@ -207,34 +204,36 @@ class BaseScraper:
         return transmission_text.lower()
 
 
+# SeleniumScraper class commented out - not needed for basic scraping
+"""
 class SeleniumScraper(BaseScraper):
-    """Selenium-based scraper for JavaScript-heavy sites"""
-    
+    # Selenium-based scraper for JavaScript-heavy sites
+
     def __init__(self):
         super().__init__()
         self.driver = None
         self.setup_driver()
-    
+
     def setup_driver(self):
-        """Setup Chrome WebDriver with appropriate options"""
+        # Setup Chrome WebDriver with appropriate options
         chrome_options = Options()
-        
+
         if scraper_settings.SELENIUM_HEADLESS:
             chrome_options.add_argument('--headless')
-        
+
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--window-size=1920,1080')
         chrome_options.add_argument(f'--user-agent={random.choice(scraper_settings.USER_AGENTS)}')
-        
+
         # Disable images and CSS for faster loading
         prefs = {
             "profile.managed_default_content_settings.images": 2,
             "profile.managed_default_content_settings.stylesheets": 2
         }
         chrome_options.add_experimental_option("prefs", prefs)
-        
+
         try:
             self.driver = webdriver.Chrome(options=chrome_options)
             self.driver.set_page_load_timeout(scraper_settings.SELENIUM_PAGE_LOAD_TIMEOUT)
@@ -243,90 +242,6 @@ class SeleniumScraper(BaseScraper):
         except Exception as e:
             logger.error(f"Failed to initialize Chrome WebDriver: {e}")
             raise
-    
-    def get_page_selenium(self, url: str) -> Optional[str]:
-        """
-        Fetch a page using Selenium
-        
-        Args:
-            url: URL to fetch
-        
-        Returns:
-            Page source HTML or None if failed
-        """
-        if not self.driver:
-            logger.error("WebDriver not initialized")
-            return None
-        
-        self.rate_limiter.wait_if_needed()
-        
-        try:
-            logger.info(f"Loading page with Selenium: {url}")
-            self.driver.get(url)
-            
-            # Wait for page to load
-            WebDriverWait(self.driver, scraper_settings.SELENIUM_TIMEOUT).until(
-                EC.presence_of_element_located((By.TAG_NAME, "body"))
-            )
-            
-            return self.driver.page_source
-            
-        except TimeoutException:
-            logger.error(f"Timeout loading page: {url}")
-        except WebDriverException as e:
-            logger.error(f"WebDriver error loading {url}: {e}")
-        except Exception as e:
-            logger.error(f"Unexpected error loading {url}: {e}")
-        
-        return None
-    
-    def click_load_more(self, selector: str) -> bool:
-        """
-        Click a 'Load More' button and wait for content to load
-        
-        Args:
-            selector: CSS selector for the load more button
-        
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            load_more_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
-            )
-            
-            self.driver.execute_script("arguments[0].click();", load_more_button)
-            
-            # Wait for new content to load
-            time.sleep(3)
-            return True
-            
-        except TimeoutException:
-            logger.info("Load more button not found or not clickable")
-        except Exception as e:
-            logger.error(f"Error clicking load more button: {e}")
-        
-        return False
-    
-    def scroll_to_bottom(self):
-        """Scroll to the bottom of the page to trigger lazy loading"""
-        try:
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
-        except Exception as e:
-            logger.error(f"Error scrolling to bottom: {e}")
-    
-    def close(self):
-        """Close the WebDriver"""
-        if self.driver:
-            try:
-                self.driver.quit()
-                logger.info("WebDriver closed successfully")
-            except Exception as e:
-                logger.error(f"Error closing WebDriver: {e}")
-            finally:
-                self.driver = None
-    
-    def __del__(self):
-        """Ensure WebDriver is closed when object is destroyed"""
-        self.close()
+"""
+
+# SeleniumScraper class and methods have been removed to eliminate selenium dependency
