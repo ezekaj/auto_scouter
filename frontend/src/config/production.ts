@@ -1,14 +1,15 @@
 // Production configuration for Auto Scouter Frontend
 
 export const config = {
-  // API Configuration
-  apiBaseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
-  wsBaseUrl: import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/ws',
-  apiTimeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
+  // API Configuration - Updated for Supabase
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'https://rwonkzncpzirokqnuoyx.supabase.co/functions/v1/vehicle-api',
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://rwonkzncpzirokqnuoyx.supabase.co',
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  apiTimeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '30000'),
 
   // Application Configuration
   appName: import.meta.env.VITE_APP_NAME || 'Auto Scouter',
-  appVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
+  appVersion: import.meta.env.VITE_APP_VERSION || '2.0.0',
   environment: import.meta.env.VITE_APP_ENVIRONMENT || 'production',
 
   // Feature Flags
@@ -39,13 +40,15 @@ export const config = {
 // Validate required configuration
 export const validateConfig = () => {
   const requiredVars = [
-    'VITE_API_URL',
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_ANON_KEY',
   ]
 
   const missing = requiredVars.filter(varName => !import.meta.env[varName])
 
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
+    console.warn(`Missing environment variables: ${missing.join(', ')}`)
+    // Don't throw error, just warn - app should still work
   }
 }
 

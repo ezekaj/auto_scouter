@@ -1,22 +1,21 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.vehiclescout.app',
-  appName: 'Vehicle Scout',
+  appId: 'com.autoscouter.supabase',
+  appName: 'Auto Scouter',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
     // Allow cleartext traffic for development
-    cleartext: true,
-    // Configure allowed navigation for Render deployment
+    cleartext: false,
+    // Configure allowed navigation for Supabase deployment
     allowNavigation: [
-      'https://vehiclescout.app',
-      'https://auto-scouter-backend.onrender.com',
-      'https://*.onrender.com',
-      'http://localhost:8000',
-      'http://127.0.0.1:8000',
+      'https://rwonkzncpzirokqnuoyx.supabase.co',
+      'https://*.supabase.co',
+      'https://carmarket.ayvens.com',
       'http://localhost:5173',
-      'http://127.0.0.1:5173'
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:54321'
     ]
   },
   plugins: {
@@ -42,7 +41,7 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true
     },
     App: {
-      launchUrl: 'https://vehiclescout.app'
+      // Remove launchUrl to use local app bundle instead of external URL
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert']

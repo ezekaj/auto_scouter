@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { vehicleAPI } from '@/lib/supabase'
 
 export interface Alert {
   id: number
@@ -64,8 +65,8 @@ export interface AlertMatch {
 export class AlertService {
   async getAlerts(): Promise<Alert[]> {
     try {
-      const response = await api.get('/alerts/')
-      return response.data || []
+      const response = await vehicleAPI.getAlerts()
+      return response || []
     } catch (error) {
       console.error('Error getting alerts:', error)
       return []
@@ -74,8 +75,12 @@ export class AlertService {
 
   async getAlert(id: number): Promise<Alert> {
     try {
-      const response = await api.get(`/alerts/${id}`)
-      return response.data
+      const alerts = await this.getAlerts()
+      const alert = alerts.find(a => a.id === id)
+      if (!alert) {
+        throw new Error('Alert not found')
+      }
+      return alert
     } catch (error) {
       console.error('Error getting alert:', error)
       throw error
@@ -84,8 +89,29 @@ export class AlertService {
 
   async createAlert(data: AlertCreateData): Promise<Alert> {
     try {
-      const response = await api.post('/alerts/', data)
-      return response.data
+      const response = await vehicleAPI.createAlert({
+        name: data.name,
+        description: data.description,
+        make: data.make,
+        model: data.model,
+        min_year: data.min_year,
+        max_year: data.max_year,
+        min_price: data.min_price,
+        max_price: data.max_price,
+        max_mileage: data.max_mileage,
+        fuel_type: data.fuel_type,
+        transmission: data.transmission,
+        body_type: data.body_type,
+        city: data.city,
+        region: data.region,
+        location_radius: data.location_radius,
+        min_engine_power: data.min_engine_power,
+        max_engine_power: data.max_engine_power,
+        condition: data.condition,
+        notification_frequency: data.notification_frequency || 'immediate',
+        max_notifications_per_day: data.max_notifications_per_day || 10
+      })
+      return response
     } catch (error) {
       console.error('Error creating alert:', error)
       throw error

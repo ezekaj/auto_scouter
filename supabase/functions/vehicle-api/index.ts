@@ -35,7 +35,9 @@ serve(async (req) => {
   )
 
   const url = new URL(req.url)
-  const path = url.pathname
+  const fullPath = url.pathname
+  // Remove the function prefix to get the actual path
+  const path = fullPath.replace('/vehicle-api', '') || '/'
   const method = req.method
 
   try {

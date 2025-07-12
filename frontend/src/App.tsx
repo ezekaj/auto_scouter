@@ -1,11 +1,7 @@
 import React, { Suspense, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { config } from '@/config/production'
-import { errorHandler } from '@/utils/errorHandler'
-import { MobileUtils } from '@/utils/mobile'
 import { nativeService } from '@/services/nativeService'
-import { initializeMobileEvents } from '@/utils/mobileEvents'
 
 
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
@@ -48,35 +44,26 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log('Initializing app...')
+        console.log('🚀 Auto Scouter - Starting app initialization...')
+        console.log('📱 Environment:', {
+          supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+          apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+          appVersion: import.meta.env.VITE_APP_VERSION,
+          environment: import.meta.env.VITE_APP_ENVIRONMENT
+        })
 
-        // Initialize native features
-        await nativeService.initialize()
-        console.log('Native service initialized')
-
-        // Initialize mobile features
-        await MobileUtils.initializeApp()
-        console.log('Mobile utils initialized')
-
-        // Initialize mobile event handling
-        initializeMobileEvents()
-        console.log('Mobile events initialized')
-
-        // Initialize production configuration
-        if (config.isProduction) {
-          console.log('Production mode - logging app start')
-          // Log application start
-          errorHandler.logUserAction('app_start', {
-            version: config.appVersion,
-            environment: config.environment,
-            platform: nativeService.isNative() ? 'mobile' : 'web',
-            appInfo: nativeService.getAppInfo(),
-          })
+        // Simplified initialization - only essential services
+        try {
+          await nativeService.initialize()
+          console.log('✅ Native service initialized')
+        } catch (error) {
+          console.warn('⚠️ Native service initialization failed (non-critical):', error)
         }
 
-        console.log('App initialization complete')
+        console.log('✅ App initialization complete')
       } catch (error) {
-        console.error('App initialization failed:', error)
+        console.error('❌ App initialization failed:', error)
+        // Don't throw - let the app continue
       }
     }
 

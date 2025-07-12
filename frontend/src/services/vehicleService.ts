@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { vehicleAPI } from '@/lib/supabase'
 
 export interface Vehicle {
   id: string
@@ -45,8 +46,48 @@ export interface VehicleSearchResponse {
 export class VehicleService {
   async searchVehicles(params: VehicleSearchParams = {}): Promise<VehicleSearchResponse> {
     try {
-      const response = await api.get('/automotive/vehicles', { params })
-      return response.data
+      // Use Supabase vehicle API
+      const response = await vehicleAPI.search({
+        make: params.make,
+        model: params.model,
+        min_price: params.priceMin,
+        max_price: params.priceMax,
+        min_year: params.yearMin,
+        max_year: params.yearMax,
+        max_mileage: params.maxMileage,
+        fuel_type: params.fuelType,
+        transmission: params.transmission,
+        body_type: params.bodyType,
+        limit: params.limit || 20,
+        offset: ((params.page || 1) - 1) * (params.limit || 20)
+      })
+
+      // Transform Supabase response to expected format
+      const vehicles = response.data?.map((vehicle: any) => ({
+        id: vehicle.id.toString(),
+        title: `${vehicle.make} ${vehicle.model}`,
+        make: vehicle.make,
+        model: vehicle.model,
+        year: vehicle.year,
+        price: vehicle.price,
+        mileage: vehicle.mileage,
+        fuelType: vehicle.fuel_type || 'Unknown',
+        transmission: vehicle.transmission || 'Unknown',
+        bodyType: vehicle.body_type,
+        location: vehicle.city || 'Unknown',
+        url: vehicle.url || '#',
+        imageUrl: vehicle.primary_image_url,
+        scrapedAt: vehicle.scraped_at || vehicle.created_at,
+        source: vehicle.source_website || 'carmarket.ayvens.com'
+      })) || []
+
+      return {
+        vehicles,
+        total: response.count || 0,
+        page: params.page || 1,
+        limit: params.limit || 20,
+        hasMore: vehicles.length === (params.limit || 20)
+      }
     } catch (error) {
       console.error('Error searching vehicles:', error)
       throw error

@@ -40,6 +40,7 @@ import { useAlerts } from '@/hooks/useAlerts';
 import { Alert } from '@/services/alertService';
 import { AlertForm } from './AlertForm';
 import { AlertTestDialog } from './AlertTestDialog';
+import { vehicleAPI } from '@/lib/supabase';
 
 // Helper function to convert Alert to AlertFormData
 const alertToFormData = (alert: Alert) => ({
@@ -78,7 +79,6 @@ export const AlertManager: React.FC = () => {
     alerts,
     loading,
     error,
-    createAlert,
     updateAlert,
     deleteAlert,
     toggleAlert,
@@ -99,17 +99,76 @@ export const AlertManager: React.FC = () => {
 
   const handleCreateAlert = async (alertData: any) => {
     try {
-      console.log('Creating alert with data:', alertData);
-      const result = await createAlert(alertData);
-      console.log('Alert created successfully:', result);
+      console.log('🚀 Starting alert creation with data:', alertData);
+      console.log('🔧 Environment check:', {
+        supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+        apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+        hasAnonKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY
+      });
+
+      // Validate required fields
+      if (!alertData.name || alertData.name.trim() === '') {
+        throw new Error('Alert name is required');
+      }
+
+      // Clean and prepare data for API
+      const cleanedData = {
+        name: alertData.name.trim(),
+        description: alertData.description?.trim() || undefined,
+        make: alertData.make?.trim() || undefined,
+        model: alertData.model?.trim() || undefined,
+        min_year: alertData.min_year ? parseInt(alertData.min_year) : undefined,
+        max_year: alertData.max_year ? parseInt(alertData.max_year) : undefined,
+        min_price: alertData.min_price ? parseInt(alertData.min_price) : undefined,
+        max_price: alertData.max_price ? parseInt(alertData.max_price) : undefined,
+        max_mileage: alertData.max_mileage ? parseInt(alertData.max_mileage) : undefined,
+        fuel_type: alertData.fuel_type?.trim() || undefined,
+        transmission: alertData.transmission?.trim() || undefined,
+        body_type: alertData.body_type?.trim() || undefined,
+        city: alertData.city?.trim() || undefined,
+        region: alertData.region?.trim() || undefined,
+        location_radius: alertData.location_radius ? parseInt(alertData.location_radius) : undefined,
+        min_engine_power: alertData.min_engine_power ? parseInt(alertData.min_engine_power) : undefined,
+        max_engine_power: alertData.max_engine_power ? parseInt(alertData.max_engine_power) : undefined,
+        condition: alertData.condition?.trim() || undefined,
+        notification_frequency: alertData.notification_frequency || 'immediate',
+        max_notifications_per_day: alertData.max_notifications_per_day || 5
+      };
+
+      console.log('🧹 Cleaned data for API:', cleanedData);
+
+      // Use Supabase vehicleAPI directly for more reliable alert creation
+      const result = await vehicleAPI.createAlert(cleanedData);
+
+      console.log('✅ Alert created successfully:', result);
       setShowCreateForm(false);
       fetchAlerts();
       // Show success message
       alert('Alert created successfully!');
     } catch (error: any) {
-      console.error('Failed to create alert:', error);
-      // Show error message to user
-      const errorMessage = error.message || 'Failed to create alert. Please try again.';
+      console.error('❌ Failed to create alert:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause
+      });
+
+      // Show detailed error message to user
+      let errorMessage = 'Failed to create alert. Please try again.';
+
+      if (error.message) {
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          errorMessage = 'Authentication error. Please restart the app.';
+        } else if (error.message.includes('400') || error.message.includes('Bad Request')) {
+          errorMessage = 'Invalid data. Please check your input and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       alert(`Error: ${errorMessage}`);
     }
   };

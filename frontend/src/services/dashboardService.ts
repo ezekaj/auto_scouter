@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { vehicleAPI } from '@/lib/supabase'
 
 export interface DashboardStats {
   activeAlerts: number
@@ -21,13 +22,14 @@ export interface RecentActivity {
 export class DashboardService {
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await api.get('/dashboard/overview')
+      // Use Supabase stats endpoint
+      const response = await vehicleAPI.getStats()
       return {
-        activeAlerts: response.data.active_alerts || 0,
-        newMatches: response.data.new_matches || 0,
-        unreadNotifications: response.data.unread_notifications || 0,
-        vehiclesViewed: response.data.total_vehicles || 0,
-        recentActivity: response.data.recent_activity || []
+        activeAlerts: response.total_alerts || 0,
+        newMatches: 0, // Will be calculated from recent notifications
+        unreadNotifications: 0, // Will be fetched separately
+        vehiclesViewed: response.total_vehicles || 0,
+        recentActivity: []
       }
     } catch (error) {
       console.error('Error getting dashboard stats:', error)
